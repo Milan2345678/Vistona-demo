@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bell,
   ChefHat,
@@ -9,6 +9,7 @@ import {
   Clock3,
   Grid2X2,
   LayoutDashboard,
+  LogOut,
   Menu as MenuIcon,
   MoreHorizontal,
   PackageCheck,
@@ -24,8 +25,16 @@ import {
 } from "lucide-react";
 
 type Role = "Manager" | "Waiter" | "Kitchen";
-type Status = "Available" | "Ordering" | "Preparing" | "Served" | "Billing";
+type Status =
+  | "Available"
+  | "Occupied"
+  | "Billing"
+  | "Ordering"
+  | "Preparing"
+  | "Served";
 type OrderStatus = "New" | "Preparing" | "Ready" | "Served" | "Completed";
+type OrderSource = "QR" | "Waiter" | "POS";
+type Tenant = { name: string; city: string };
 type View =
   | "Dashboard"
   | "Tables"
@@ -39,6 +48,7 @@ type View =
 
 type Table = {
   id: string;
+  databaseId?: string;
   seats: number;
   status: Status;
   order: string | null;
@@ -53,8 +63,13 @@ type Order = {
   amount: number;
   status: OrderStatus;
   time: string;
+  source: OrderSource;
+  tenantId?: string;
+  restaurantOrderId?: string;
+  menuItemIds?: Record<string, string>;
 };
 type MenuItem = {
+  id?: string;
   name: string;
   description: string;
   category: string;
@@ -62,213 +77,6 @@ type MenuItem = {
   veg: boolean;
   available: boolean;
 };
-type Request = { id: number; table: string; title: string; time: string };
-
-const initialTables: Table[] = [
-  {
-    id: "T01",
-    seats: 2,
-    status: "Available",
-    order: null,
-    waiter: "-",
-    elapsed: "",
-  },
-  {
-    id: "T02",
-    seats: 4,
-    status: "Ordering",
-    order: "#1041",
-    waiter: "Meera",
-    elapsed: "8 min",
-  },
-  {
-    id: "T03",
-    seats: 4,
-    status: "Preparing",
-    order: "#1042",
-    waiter: "Rahul",
-    elapsed: "12 min",
-  },
-  {
-    id: "T04",
-    seats: 6,
-    status: "Available",
-    order: null,
-    waiter: "-",
-    elapsed: "",
-  },
-  {
-    id: "T05",
-    seats: 2,
-    status: "Served",
-    order: "#1039",
-    waiter: "Meera",
-    elapsed: "22 min",
-  },
-  {
-    id: "T06",
-    seats: 4,
-    status: "Billing",
-    order: "#1038",
-    waiter: "Rahul",
-    elapsed: "31 min",
-  },
-  {
-    id: "T07",
-    seats: 6,
-    status: "Preparing",
-    order: "#1040",
-    waiter: "Asha",
-    elapsed: "16 min",
-  },
-  {
-    id: "T08",
-    seats: 8,
-    status: "Available",
-    order: null,
-    waiter: "-",
-    elapsed: "",
-  },
-  {
-    id: "T09",
-    seats: 4,
-    status: "Available",
-    order: null,
-    waiter: "-",
-    elapsed: "",
-  },
-  {
-    id: "T10",
-    seats: 2,
-    status: "Served",
-    order: "#1037",
-    waiter: "Asha",
-    elapsed: "26 min",
-  },
-  {
-    id: "T11",
-    seats: 4,
-    status: "Available",
-    order: null,
-    waiter: "-",
-    elapsed: "",
-  },
-  {
-    id: "T12",
-    seats: 6,
-    status: "Ordering",
-    order: "#1036",
-    waiter: "Rahul",
-    elapsed: "5 min",
-  },
-];
-
-const initialOrders: Order[] = [
-  {
-    id: "#1042",
-    table: "T03",
-    waiter: "Rahul",
-    items: ["Paneer Tikka x1", "Butter Chicken x1", "Butter Naan x4"],
-    amount: 880,
-    status: "Preparing",
-    time: "12 min ago",
-  },
-  {
-    id: "#1041",
-    table: "T02",
-    waiter: "Meera",
-    items: ["Dal Makhani x1", "Garlic Naan x2"],
-    amount: 540,
-    status: "Ready",
-    time: "8 min ago",
-  },
-  {
-    id: "#1040",
-    table: "T07",
-    waiter: "Asha",
-    items: ["Tandoori Chicken x1", "Jeera Rice x1"],
-    amount: 760,
-    status: "New",
-    time: "16 min ago",
-  },
-  {
-    id: "#1039",
-    table: "T05",
-    waiter: "Meera",
-    items: ["Kadhai Paneer x1", "Plain Rice x1"],
-    amount: 480,
-    status: "Served",
-    time: "22 min ago",
-  },
-];
-
-const menuSeed: MenuItem[] = [
-  {
-    name: "Paneer Tikka",
-    description: "Charred cottage cheese, peppers and house spices",
-    category: "Starters",
-    price: 220,
-    veg: true,
-    available: true,
-  },
-  {
-    name: "Butter Chicken",
-    description: "Creamy tomato curry with tandoori chicken",
-    category: "Main Course",
-    price: 320,
-    veg: false,
-    available: true,
-  },
-  {
-    name: "Dal Makhani",
-    description: "Slow-cooked black lentils finished with butter",
-    category: "Main Course",
-    price: 220,
-    veg: true,
-    available: true,
-  },
-  {
-    name: "Kadhai Paneer",
-    description: "Paneer, onion and peppers in a robust masala",
-    category: "Main Course",
-    price: 280,
-    veg: true,
-    available: true,
-  },
-  {
-    name: "Butter Naan",
-    description: "Tandoor-baked naan brushed with cultured butter",
-    category: "Breads",
-    price: 60,
-    veg: true,
-    available: true,
-  },
-  {
-    name: "Garlic Naan",
-    description: "Soft naan with roasted garlic and coriander",
-    category: "Breads",
-    price: 80,
-    veg: true,
-    available: true,
-  },
-  {
-    name: "Masala Chaas",
-    description: "Chilled buttermilk with cumin and mint",
-    category: "Drinks",
-    price: 70,
-    veg: true,
-    available: false,
-  },
-  {
-    name: "Gulab Jamun",
-    description: "Warm khoya dumplings with cardamom syrup",
-    category: "Desserts",
-    price: 120,
-    veg: true,
-    available: true,
-  },
-];
-
 const navItems: { label: View; icon: typeof LayoutDashboard; roles: Role[] }[] =
   [
     { label: "Dashboard", icon: LayoutDashboard, roles: ["Manager"] },
@@ -291,42 +99,209 @@ const statusTone: Record<string, string> = {
   Ordering: "status-ordering",
   Preparing: "status-preparing",
   Served: "status-served",
+  Occupied: "status-ordering",
   Billing: "status-billing",
   New: "status-new",
   Ready: "status-ready",
   Completed: "status-served",
 };
+const sourceTone: Record<OrderSource, string> = {
+  QR: "source-qr",
+  Waiter: "source-waiter",
+  POS: "source-pos",
+};
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 
 export default function Home() {
   const [signedIn, setSignedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [role, setRole] = useState<Role>("Manager");
   const [view, setView] = useState<View>("Dashboard");
-  const [tables, setTables] = useState(initialTables);
-  const [orders, setOrders] = useState(initialOrders);
-  const [menu, setMenu] = useState(menuSeed);
-  const [requests, setRequests] = useState<Request[]>([
-    { id: 1, table: "T07", title: "Bring Bill", time: "2 min ago" },
-    { id: 2, table: "T03", title: "Need Water", time: "1 min ago" },
-    { id: 3, table: "T11", title: "Call Waiter", time: "Just now" },
-  ]);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [menu, setMenu] = useState<MenuItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantCity, setRestaurantCity] = useState("");
+  const [userName, setUserName] = useState("Manager");
+  const [loginError, setLoginError] = useState("");
   const [toast, setToast] = useState("");
-  const [orderItems, setOrderItems] = useState<Record<string, number>>({
-    "Paneer Tikka": 1,
-    "Butter Chicken": 1,
-    "Butter Naan": 4,
-  });
+  const [orderItems, setOrderItems] = useState<Record<string, number>>({});
   const [menuSearch, setMenuSearch] = useState("");
   const [menuCategory, setMenuCategory] = useState("All");
   const [orderFilter, setOrderFilter] = useState("All");
 
-  if (!signedIn)
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/auth/session")
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then((data) => {
+        if (!mounted || !data?.user) return;
+        const nextRole = (data.user.role[0].toUpperCase() +
+          data.user.role.slice(1)) as Role;
+        setRole(nextRole);
+        setUserName(data.user.name ?? data.user.email);
+        setSignedIn(true);
+        setView(
+          nextRole === "Kitchen"
+            ? "Kitchen"
+            : nextRole === "Waiter"
+              ? "Tables"
+              : "Dashboard",
+        );
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted) setAuthReady(true);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    let mounted = true;
+    const loadData = async () => {
+      try {
+        const [restaurantResponse, ordersResponse] = await Promise.all([
+          fetch("/api/restaurant"),
+          fetch("/api/orders"),
+        ]);
+        if (!restaurantResponse.ok || !ordersResponse.ok) return;
+        const [restaurantData, orderData] = await Promise.all([
+          restaurantResponse.json(),
+          ordersResponse.json(),
+        ]);
+        if (!mounted) return;
+        setRestaurantName(restaurantData.restaurant.name);
+        setRestaurantCity(restaurantData.restaurant.city);
+        setTables(
+          restaurantData.tables.map(
+            (table: {
+              id: string;
+              number: string;
+              seats: number;
+              status: string;
+            }) => ({
+              id: table.number,
+              seats: table.seats,
+              status:
+                table.status === "AVAILABLE"
+                  ? "Available"
+                  : table.status === "BILLING"
+                    ? "Billing"
+                    : "Occupied",
+              order: null,
+              waiter: "-",
+              elapsed: "",
+              databaseId: table.id,
+            }),
+          ),
+        );
+        setMenu(
+          restaurantData.menu.map(
+            (item: {
+              id: string;
+              name: string;
+              description: string;
+              category: string;
+              price: number;
+              vegetarian: boolean;
+              available: boolean;
+            }) => ({
+              ...item,
+              veg: item.vegetarian,
+            }),
+          ),
+        );
+        setOrders(
+          orderData.orders.map(
+            (order: {
+              id: string;
+              number: number;
+              tableNumber: string | null;
+              waiterName: string | null;
+              items: { menuItemId: string; name: string; quantity: number }[];
+              amount: number;
+              status: string;
+              createdAt: string;
+              source: string;
+            }) => ({
+              id: `#${order.number}`,
+              restaurantOrderId: order.id,
+              table: order.tableNumber
+                ? `T${order.tableNumber.replace(/^T/, "")}`
+                : "QR order",
+              waiter: order.waiterName ?? "QR guest",
+              items: order.items.map(
+                (item) => `${item.name} x${item.quantity}`,
+              ),
+              amount: order.amount,
+              status:
+                order.status[0].toUpperCase() +
+                order.status.slice(1).toLowerCase(),
+              time: new Date(order.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              source: order.source.toUpperCase(),
+              menuItemIds: Object.fromEntries(
+                order.items.map((item) => [item.name, item.menuItemId]),
+              ),
+            }),
+          ),
+        );
+      } catch {
+        if (mounted) setToast("Could not sync restaurant data");
+      }
+    };
+    void loadData();
+    const timer = window.setInterval(() => void loadData(), 5000);
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
+  }, [signedIn]);
+
+  async function signOut() {
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) {
+        setToast("Sign out failed. Please try again.");
+        return;
+      }
+      setSignedIn(false);
+      setLoginError("");
+    } catch {
+      setToast("Sign out failed. Please try again.");
+    }
+  }
+
+  if (!authReady || !signedIn)
     return (
       <LoginScreen
-        onSignIn={(nextRole) => {
+        error={loginError}
+        onSignIn={async (email, password) => {
+          setLoginError("");
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            setLoginError(data.error ?? "Sign-in failed");
+            return;
+          }
+          const nextRole = (data.user.role[0].toUpperCase() +
+            data.user.role.slice(1)) as Role;
           setRole(nextRole);
+          setUserName(data.user.name);
           setSignedIn(true);
           setView(
             nextRole === "Kitchen"
@@ -343,10 +318,8 @@ export default function Home() {
     setToast(message);
     window.setTimeout(() => setToast(""), 2400);
   };
-  const activeOrderCount = orders.filter(
-    (order) => !["Completed", "Served"].includes(order.status),
-  ).length;
-  const currentTable = tables.find((table) => table.id === "T03")!;
+  const currentTable =
+    selectedTable ?? tables.find((table) => table.id === "T03") ?? tables[0];
   const orderTotal = Object.entries(orderItems).reduce(
     (total, [name, quantity]) =>
       total + (menu.find((item) => item.name === name)?.price ?? 0) * quantity,
@@ -362,34 +335,90 @@ export default function Home() {
   );
 
   function updateOrder(id: string, status: OrderStatus) {
-    setOrders((current) =>
-      current.map((order) => (order.id === id ? { ...order, status } : order)),
-    );
-    const order = orders.find((item) => item.id === id);
-    if (order)
-      setTables((current) =>
-        current.map((table) =>
-          table.id === order.table
-            ? {
-                ...table,
-                status:
-                  status === "Ready"
-                    ? "Served"
-                    : status === "Served"
-                      ? "Available"
-                      : "Preparing",
-              }
-            : table,
-        ),
-      );
-    notify(`${id} marked ${status.toLowerCase()}`);
+    const currentOrder = orders.find((order) => order.id === id);
+    if (currentOrder?.restaurantOrderId) {
+      const apiStatus = status.toUpperCase();
+      void fetch(`/api/orders/${currentOrder.restaurantOrderId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: apiStatus }),
+      }).then(async (response) => {
+        if (!response.ok) {
+          const data = await response.json();
+          notify(data.error ?? "Order update failed");
+          return;
+        }
+        const data = await response.json();
+        setOrders((current) =>
+          current.map((order) =>
+            order.id === id
+              ? {
+                  ...order,
+                  status:
+                    data.order.status[0].toUpperCase() +
+                    data.order.status.slice(1).toLowerCase(),
+                }
+              : order,
+          ),
+        );
+      });
+      return;
+    }
+    notify("Order is not available for updates");
   }
 
   function sendToKitchen() {
-    const target = orders.find((order) => order.id === "#1042");
-    if (target) updateOrder(target.id, "Preparing");
-    setView("Kitchen");
-    notify("KOT sent to kitchen");
+    const selectedItems = Object.entries(orderItems).filter(
+      ([, quantity]) => quantity > 0,
+    );
+    const items = selectedItems.map(([name, quantity]) => ({
+      menuItemId: menu.find((item) => item.name === name)?.id,
+      quantity,
+    }));
+    if (items.some((item) => !item.menuItemId)) {
+      notify("Menu data is still loading");
+      return;
+    }
+    const tableId = (
+      currentTable as (Table & { databaseId?: string }) | undefined
+    )?.databaseId;
+    if (!tableId) {
+      notify("Select a table before sending the order");
+      return;
+    }
+    void fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tableId, items }),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) {
+        notify(data.error ?? "Order could not be sent");
+        return;
+      }
+      const created = data.order;
+      setOrders((current) => [
+        {
+          id: `#${created.number}`,
+          restaurantOrderId: created.id,
+          table: created.tableNumber
+            ? `T${created.tableNumber.replace(/^T/, "")}`
+            : "QR order",
+          waiter: userName,
+          items: created.items.map(
+            (item: { name: string; quantity: number }) =>
+              `${item.name} x${item.quantity}`,
+          ),
+          amount: created.amount,
+          status: "New",
+          time: "Just now",
+          source: "Waiter",
+        },
+        ...current,
+      ]);
+      setView("Kitchen");
+      notify("KOT sent to kitchen");
+    });
   }
 
   function addItem(name: string, delta: number) {
@@ -399,17 +428,76 @@ export default function Home() {
     }));
   }
 
-  function changeTableStatus(status: Status) {
+  async function changeTableStatus(status: Status) {
     if (!selectedTable) return;
-    setTables((current) =>
-      current.map((table) =>
-        table.id === selectedTable.id ? { ...table, status } : table,
-      ),
-    );
-    setSelectedTable((table) => (table ? { ...table, status } : table));
-    notify(`${selectedTable.id} is now ${status.toLowerCase()}`);
+    if (!selectedTable.databaseId) {
+      notify("Table is not available for updates");
+      return;
+    }
+    const databaseStatus = status.toUpperCase();
+    try {
+      const response = await fetch(
+        `/api/restaurant/tables/${selectedTable.databaseId}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: databaseStatus }),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        notify(data.error ?? "Table status update failed");
+        return;
+      }
+      setTables((current) =>
+        current.map((table) =>
+          table.id === selectedTable.id ? { ...table, status } : table,
+        ),
+      );
+      setSelectedTable((table) => (table ? { ...table, status } : table));
+      notify(`${selectedTable.id} is now ${status.toLowerCase()}`);
+    } catch {
+      notify("Table status update failed");
+    }
   }
 
+  async function toggleMenuAvailability(item: MenuItem) {
+    if (!item.id) {
+      notify("Menu item is not available for updates");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `/api/restaurant/menu/${item.id}/availability`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ available: !item.available }),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        notify(data.error ?? "Menu availability update failed");
+        return;
+      }
+      setMenu((current) =>
+        current.map((entry) =>
+          entry.id === item.id
+            ? { ...entry, available: data.item.available }
+            : entry,
+        ),
+      );
+    } catch {
+      notify("Menu availability update failed");
+    }
+  }
+
+  const activeTenant = { name: restaurantName, city: restaurantCity };
+  const orderSourceMix = {
+    QR: orders.filter((order) => order.source === "QR").length,
+    Waiter: orders.filter((order) => order.source === "Waiter").length,
+    POS: orders.filter((order) => order.source === "POS").length,
+  };
   const pageTitle = view === "Waiter Mode" ? "Captain mode" : view;
   return (
     <div className="app-shell">
@@ -427,7 +515,7 @@ export default function Home() {
           <Store size={16} />
           <div>
             <span>Restaurant</span>
-            <strong>Anndham Family Dhaba</strong>
+            <strong>{restaurantName}</strong>
           </div>
           <ChevronDown size={15} />
         </div>
@@ -454,12 +542,19 @@ export default function Home() {
             <span className="live-dot" /> <span>Service is live</span>
           </div>
           <div className="user-chip">
-            <div className="avatar">M</div>
+            <div className="avatar">{userName.slice(0, 1).toUpperCase()}</div>
             <div>
-              <strong>Milan Rao</strong>
+              <strong>{userName}</strong>
               <span>{role}</span>
             </div>
-            <MoreHorizontal size={17} />
+            <button
+              className="icon-button"
+              onClick={() => void signOut()}
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut size={17} />
+            </button>
           </div>
         </div>
       </aside>
@@ -473,7 +568,7 @@ export default function Home() {
             <strong>VISTONA</strong>
           </div>
           <div className="breadcrumb">
-            <span>ANNDHAM FAMILY DHABA</span>
+            <span>{activeTenant.name.toUpperCase()}</span>
             <b>/</b>
             <strong>{pageTitle.toUpperCase()}</strong>
           </div>
@@ -488,24 +583,7 @@ export default function Home() {
             </button>
             <div className="role-select">
               <span>Viewing as</span>
-              <select
-                value={role}
-                onChange={(event) => {
-                  const nextRole = event.target.value as Role;
-                  setRole(nextRole);
-                  setView(
-                    nextRole === "Kitchen"
-                      ? "Kitchen"
-                      : nextRole === "Waiter"
-                        ? "Tables"
-                        : "Dashboard",
-                  );
-                }}
-              >
-                <option>Manager</option>
-                <option>Waiter</option>
-                <option>Kitchen</option>
-              </select>
+              <strong>{role}</strong>
             </div>
           </div>
         </header>
@@ -514,15 +592,10 @@ export default function Home() {
           <Dashboard
             tables={tables}
             orders={orders}
-            requests={requests}
+            tenant={activeTenant}
+            orderSourceMix={orderSourceMix}
             onTable={setSelectedTable}
             onOrder={setSelectedOrder}
-            onResolve={(id) => {
-              setRequests((current) =>
-                current.filter((request) => request.id !== id),
-              );
-              notify("Request resolved");
-            }}
             onNavigate={setView}
           />
         )}
@@ -539,20 +612,33 @@ export default function Home() {
             filter={orderFilter}
             setFilter={setOrderFilter}
             onOrder={setSelectedOrder}
-            onUpdate={updateOrder}
           />
         )}
-        {view === "Waiter Mode" && (
-          <WaiterView
-            currentTable={currentTable}
-            menu={menu}
-            orderItems={orderItems}
-            total={orderTotal}
-            onAdd={addItem}
-            onSend={sendToKitchen}
-            onNavigate={setView}
-          />
-        )}
+        {view === "Waiter Mode" &&
+          (currentTable ? (
+            <WaiterView
+              currentTable={currentTable}
+              menu={menu}
+              orderItems={orderItems}
+              total={orderTotal}
+              onAdd={addItem}
+              onSend={sendToKitchen}
+              onNavigate={setView}
+            />
+          ) : (
+            <div className="page">
+              <div className="empty-state">
+                <Utensils size={20} />
+                <p>Select a table to start an order.</p>
+                <button
+                  className="secondary-button"
+                  onClick={() => setView("Tables")}
+                >
+                  View tables
+                </button>
+              </div>
+            </div>
+          ))}
         {view === "Kitchen" && (
           <KitchenView orders={orders} onUpdate={updateOrder} />
         )}
@@ -564,14 +650,8 @@ export default function Home() {
             setSearch={setMenuSearch}
             setCategory={setMenuCategory}
             onToggle={(name) => {
-              setMenu((current) =>
-                current.map((item) =>
-                  item.name === name
-                    ? { ...item, available: !item.available }
-                    : item,
-                ),
-              );
-              notify("Menu availability updated");
+              const item = menu.find((entry) => entry.name === name);
+              if (item) void toggleMenuAvailability(item);
             }}
           />
         )}
@@ -610,25 +690,25 @@ export default function Home() {
 function Dashboard({
   tables,
   orders,
-  requests,
+  tenant,
+  orderSourceMix,
   onTable,
   onOrder,
-  onResolve,
   onNavigate,
 }: {
   tables: Table[];
   orders: Order[];
-  requests: Request[];
+  tenant: Tenant;
+  orderSourceMix: Record<OrderSource, number>;
   onTable: (table: Table) => void;
   onOrder: (order: Order) => void;
-  onResolve: (id: number) => void;
   onNavigate: (view: View) => void;
 }) {
   return (
     <div className="page">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">GOOD EVENING, MILAN</span>
+          <span className="eyebrow">SERVICE OVERVIEW</span>
           <h1>Restaurant overview</h1>
           <p>Everything happening across your floor, kitchen and orders.</p>
         </div>
@@ -641,29 +721,30 @@ function Dashboard({
       </div>
       <div className="metrics">
         <Metric
-          label="Today's sales"
-          value="₹42,850"
-          note="+12.4% vs yesterday"
-          positive
+          label="Order value"
+          value={money(
+            orders.reduce((total, order) => total + order.amount, 0),
+          )}
+          note="From loaded restaurant orders"
         />
         <Metric
           label="Orders"
-          value={String(orders.length + 64)}
-          note="8 orders in service"
+          value={String(orders.length)}
+          note="Loaded restaurant orders"
         />
         <Metric
           label="Active tables"
           value={String(
             tables.filter((table) => table.status !== "Available").length,
           )}
-          note="of 12 tables"
+          note={`of ${tables.length} tables`}
         />
         <Metric
           label="Pending orders"
           value={String(
             orders.filter((order) =>
               ["New", "Preparing"].includes(order.status),
-            ).length + 5,
+            ).length,
           )}
           note="Across floor & kitchen"
         />
@@ -724,31 +805,29 @@ function Dashboard({
             ))}
           </div>
         </section>
-        <section className="section-block requests">
-          <SectionTitle
-            title="Staff requests"
-            action={`${requests.length} open`}
-          />
-          <div className="compact-list">
-            {requests.map((request) => (
-              <div className="list-row" key={request.id}>
-                <div className="request-symbol">
-                  <Bell size={16} />
-                </div>
-                <div className="row-main">
-                  <strong>
-                    {request.table} <span>{request.title}</span>
-                  </strong>
-                  <small>{request.time}</small>
-                </div>
-                <button
-                  className="text-button"
-                  onClick={() => onResolve(request.id)}
-                >
-                  Resolve
-                </button>
+        <section className="section-block tenant-panel">
+          <SectionTitle title="Restaurant" action={tenant.city} />
+          <div className="tenant-stack">
+            <div className="tenant-row">
+              <div>
+                <span className="eyebrow">Tenant</span>
+                <strong>{tenant.name}</strong>
               </div>
-            ))}
+              <span className="tenant-status live">Active</span>
+            </div>
+            <div className="tenant-meta">
+              <span>{tenant.city}</span>
+            </div>
+            <div className="source-grid">
+              {(Object.keys(orderSourceMix) as OrderSource[]).map((key) => (
+                <div className="source-pill" key={key}>
+                  <span className={`source-badge ${sourceTone[key]}`}>
+                    {key}
+                  </span>
+                  <strong>{orderSourceMix[key]}</strong>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </div>
@@ -756,8 +835,14 @@ function Dashboard({
   );
 }
 
-function LoginScreen({ onSignIn }: { onSignIn: (role: Role) => void }) {
-  const [email, setEmail] = useState("milan@vistona.global");
+function LoginScreen({
+  onSignIn,
+  error,
+}: {
+  onSignIn: (email: string, password: string) => Promise<void>;
+  error: string;
+}) {
+  const [email, setEmail] = useState("manager@vistona.local");
   const [password, setPassword] = useState("demo123");
   return (
     <main className="login-page">
@@ -784,7 +869,7 @@ function LoginScreen({ onSignIn }: { onSignIn: (role: Role) => void }) {
         <section className="login-card">
           <span className="eyebrow">WELCOME BACK</span>
           <h2>Sign in to Vistona</h2>
-          <p>Use a demo profile to explore the operating system.</p>
+          <p>Sign in with your restaurant account.</p>
           <label>
             Email
             <input
@@ -802,25 +887,30 @@ function LoginScreen({ onSignIn }: { onSignIn: (role: Role) => void }) {
           </label>
           <button
             className="primary-button full"
-            onClick={() => onSignIn("Manager")}
+            onClick={() => void onSignIn(email, password)}
           >
             Sign in <ChevronDown size={15} />
           </button>
+          {error && (
+            <p role="alert" className="login-error">
+              {error}
+            </p>
+          )}
           <div className="demo-divider">
             <span>DEMO ACCESS</span>
           </div>
           <div className="demo-roles">
-            <button onClick={() => onSignIn("Manager")}>
+            <button onClick={() => setEmail("manager@vistona.local")}>
               <strong>Manager</strong>
-              <span>Full restaurant access</span>
+              <span>Select demo account</span>
             </button>
-            <button onClick={() => onSignIn("Waiter")}>
+            <button onClick={() => setEmail("waiter@vistona.local")}>
               <strong>Waiter</strong>
-              <span>Tables and captain mode</span>
+              <span>Select demo account</span>
             </button>
-            <button onClick={() => onSignIn("Kitchen")}>
+            <button onClick={() => setEmail("kitchen@vistona.local")}>
               <strong>Kitchen</strong>
-              <span>Live ticket display</span>
+              <span>Select demo account</span>
             </button>
           </div>
         </section>
@@ -910,13 +1000,11 @@ function OrdersView({
   filter,
   setFilter,
   onOrder,
-  onUpdate,
 }: {
   orders: Order[];
   filter: string;
   setFilter: (value: string) => void;
   onOrder: (order: Order) => void;
-  onUpdate: (id: string, status: OrderStatus) => void;
 }) {
   return (
     <div className="page">
@@ -1089,6 +1177,11 @@ function WaiterView({
           <div className="summary-total">
             <span>{count} items</span>
             <strong>{money(total)}</strong>
+          </div>
+          <div className="order-origin">
+            <span className="eyebrow">ORDER SOURCE</span>
+            <strong>Manual waiter entry</strong>
+            <small>QR ordering is also enabled for table-side checkout.</small>
           </div>
           <button className="primary-button full" onClick={onSend}>
             <ChefHat size={16} /> Send to kitchen
@@ -1447,6 +1540,25 @@ function SettingsView() {
           );
         })}
       </div>
+      <div className="rbac-panel">
+        <div className="section-title">
+          <h2>Role-based access</h2>
+          <button>Tenant RBAC</button>
+        </div>
+        <div className="rbac-grid">
+          {[
+            { role: "Owner", access: "Tenant billing, staff, menu, reports" },
+            { role: "Manager", access: "Floor overview, orders, settings" },
+            { role: "Waiter", access: "Tables, order capture, QR order flow" },
+            { role: "Kitchen", access: "KOT queue, prep and ready states" },
+          ].map((row) => (
+            <div className="rbac-row" key={row.role}>
+              <strong>{row.role}</strong>
+              <span>{row.access}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1537,15 +1649,14 @@ function TablePanel({
             >
               <CircleDollarSign size={15} /> Request bill
             </button>
-            <button
-              className="secondary-button"
-              onClick={() =>
-                onStatus(table.status === "Served" ? "Available" : "Served")
-              }
-            >
-              <PackageCheck size={15} /> Mark{" "}
-              {table.status === "Served" ? "available" : "served"}
-            </button>
+            {table.status !== "Available" && (
+              <button
+                className="secondary-button"
+                onClick={() => onStatus("Available")}
+              >
+                <PackageCheck size={15} /> Mark available
+              </button>
+            )}
           </div>
         </div>
       </aside>
@@ -1593,6 +1704,12 @@ function OrderPanel({
               <span>{item}</span>
             </div>
           ))}
+          <div className="drawer-order-line source-row">
+            <span>Source</span>
+            <span className={`source-badge ${sourceTone[order.source]}`}>
+              {order.source}
+            </span>
+          </div>
           <div className="drawer-total">
             <span>Total</span>
             <strong>{money(order.amount)}</strong>

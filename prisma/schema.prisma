@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  MANAGER
+  WAITER
+  KITCHEN
+}
+
+enum OrderSource {
+  QR
+  WAITER
+  POS
+}
+
+enum OrderStatus {
+  NEW
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  BILLING
+}
+
+model Tenant {
+  id          String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  name        String
+  slug        String       @unique
+  createdAt   DateTime     @default(now())
+  users       User[]
+  restaurants Restaurant[]
+}
+
+model Restaurant {
+  id         String             @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId   String
+  name       String
+  slug       String             @unique
+  city       String
+  timezone   String             @default("Asia/Kolkata")
+  createdAt  DateTime           @default(now())
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users      User[]
+  tables     RestaurantTable[]
+  categories MenuCategory[]
+  menuItems  MenuItem[]
+  orders     Order[]
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model User {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  name         String
+  email        String       @unique
+  passwordHash String
+  role         UserRole
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  orders       Order[]
+  kotEvents    KotEvent[]
+
+  @@unique([id, tenantId])
+  @@index([restaurantId, tenantId])
+}
+
+model RestaurantTable {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  number       String
+  seats        Int
+  status       TableStatus  @default(AVAILABLE)
+  restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  orders       Order[]
+
+  @@unique([id, restaurantId, tenantId])
+  @@unique([restaurantId, tenantId, number])
+}
+
+model MenuCategory {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  name         String
+  sortOrder    Int          @default(0)
+  restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  items        MenuItem[]
+
+  @@unique([id, restaurantId, tenantId])
+  @@unique([restaurantId, tenantId, name])
+}
+
+model MenuItem {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  categoryId   String
+  name         String
+  description  String       @default("")
+  price        Decimal      @db.Decimal(10, 2)
+  vegetarian   Boolean      @default(false)
+  available    Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  category     MenuCategory @relation(fields: [categoryId, restaurantId, tenantId], references: [id, restaurantId, tenantId], onDelete: Restrict)
+  orderItems   OrderItem[]
+
+  @@unique([id, restaurantId, tenantId])
+  @@unique([restaurantId, tenantId, name])
+  @@index([restaurantId, tenantId, available])
+}
+
+model Order {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  number       Int
+  tenantId     String
+  restaurantId String
+  tableId      String?
+  userId       String?
+  source       OrderSource
+  status       OrderStatus  @default(NEW)
+  notes        String       @default("")
+  totalAmount  Decimal      @db.Decimal(10, 2)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  table        RestaurantTable? @relation(fields: [tableId, restaurantId, tenantId], references: [id, restaurantId, tenantId], onDelete: Restrict)
+  user         User?        @relation(fields: [userId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  items        OrderItem[]
+  kot          KotTicket?
+
+  @@unique([id, restaurantId, tenantId])
+  @@unique([restaurantId, tenantId, number])
+  @@index([restaurantId, tenantId, status, createdAt])
+}
+
+model OrderItem {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  orderId      String
+  menuItemId   String
+  itemName     String
+  quantity     Int
+  unitPrice    Decimal      @db.Decimal(10, 2)
+  order        Order        @relation(fields: [orderId, restaurantId, tenantId], references: [id, restaurantId, tenantId], onDelete: Cascade)
+  menuItem     MenuItem     @relation(fields: [menuItemId, restaurantId, tenantId], references: [id, restaurantId, tenantId], onDelete: Restrict)
+
+  @@index([orderId])
+}
+
+model KotTicket {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  orderId      String       @unique
+  status       OrderStatus  @default(NEW)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  order        Order        @relation(fields: [orderId, restaurantId, tenantId], references: [id, restaurantId, tenantId], onDelete: Cascade)
+  events       KotEvent[]
+
+  @@unique([id, restaurantId, tenantId])
+}
+
+model KotEvent {
+  id           String       @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  ticketId     String
+  actorId      String?
+  status       OrderStatus
+  note         String       @default("")
+  createdAt    DateTime     @default(now())
+  ticket       KotTicket    @relation(fields: [ticketId, restaurantId, tenantId], references: [id, restaurantId, tenantId], onDelete: Cascade)
+  actor        User?        @relation(fields: [actorId, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  @@index([ticketId, createdAt])
+}

@@ -93,6 +93,16 @@ button {
   color: var(--muted);
   font-size: 10px;
 }
+.restaurant-switch select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 3px;
+  outline: 0;
+}
 .restaurant-switch strong {
   font-size: 11px;
   margin-top: 3px;
@@ -441,6 +451,98 @@ button {
 .status-available {
   color: #62835f;
   background: #e5f0e3;
+}
+.tenant-panel {
+  grid-column: 1 / -1;
+}
+.tenant-stack {
+  display: grid;
+  gap: 14px;
+}
+.tenant-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.tenant-row > div {
+  min-width: 0;
+}
+.tenant-row strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+}
+.tenant-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.tenant-status.live {
+  background: #e4f0df;
+  color: #557e47;
+}
+.tenant-status.paused {
+  background: #f3ebdc;
+  color: #8e6c32;
+}
+.tenant-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #8d938d;
+  font-size: 10px;
+}
+.tenant-meta span {
+  background: #f3f4ef;
+  border-radius: 999px;
+  padding: 5px 8px;
+}
+.source-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.source-pill {
+  background: #f8f8f3;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px 10px;
+}
+.source-pill strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 20px;
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.source-qr {
+  background: #f5e7df;
+  color: #9b5d42;
+}
+.source-waiter {
+  background: #f2efcf;
+  color: #7d6628;
+}
+.source-pos {
+  background: #e5efea;
+  color: #3c6659;
 }
 .status-ordering,
 .status-new {
@@ -805,6 +907,23 @@ button {
   font-family: Georgia, serif;
   font-size: 23px;
   font-weight: 400;
+}
+.order-origin {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f9f9f5;
+  padding: 12px 10px;
+  margin: 12px 0 15px;
+}
+.order-origin strong {
+  font-size: 12px;
+}
+.order-origin small {
+  color: #8b938b;
+  font-size: 10px;
+  line-height: 1.5;
 }
 .order-summary .secondary-button {
   margin-top: 8px;
@@ -1173,6 +1292,34 @@ button {
   font-size: 11px;
   margin-top: 5px;
 }
+.rbac-panel {
+  margin-top: 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 21px;
+}
+.rbac-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.rbac-row {
+  display: grid;
+  gap: 6px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfbf8;
+}
+.rbac-row strong {
+  font-size: 12px;
+}
+.rbac-row span {
+  color: #8e938d;
+  font-size: 11px;
+  line-height: 1.5;
+}
 .setting-icon {
   width: 35px;
   height: 35px;
@@ -1249,6 +1396,10 @@ button {
   font-size: 11px;
   padding: 7px 0;
   color: #6e766f;
+}
+.source-row {
+  align-items: center;
+  gap: 8px;
 }
 .drawer-order-line b {
   font-weight: 400;
