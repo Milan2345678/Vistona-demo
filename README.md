@@ -89,15 +89,17 @@ kot_events
   created_at
 ```
 
-## Current app status
+## Implemented workflows
 
-The existing UI has been extended to reflect the SaaS operating model without replacing the working restaurant flow. The app now includes:
+- **Authentication and tenant isolation:** restaurant owners can create a tenant, restaurant, and manager account at `/signup`. Managers create waiter and kitchen accounts directly or issue single-use invitations at `/manager/staff`; staff accept invitations at `/join`. Signed-in users can update account details at `/account`.
+- **Role-based operations:** managers, waiters, and kitchen staff have protected dashboards at `/manager/dashboard`, `/waiter/dashboard`, and `/kitchen/dashboard`. API queries are scoped to the signed-in user's tenant and restaurant.
+- **Tables and QR codes:** managers can create, edit, and deactivate tables. Each table has a stable public QR token; changing its number does not invalidate printed QR codes. Waiters can view active tables and update table status.
+- **Menu management:** managers manage dishes and categories at `/manager/menu`. Menu items support descriptions, prices, vegetarian labels, availability, and optional image URLs. Removing a dish is a soft delete to preserve order history.
+- **Orders and KOT:** QR, waiter, and POS orders share an order lifecycle and server-derived pricing. Role-checked transitions update KOT tickets and record events. The dashboard refreshes data by polling the API.
+- **Customer QR ordering:** customers can view a restaurant menu and place an order from `/menu/{restaurantSlug}/table/{tableToken}`. The server resolves the table from its opaque token rather than trusting a submitted table number.
+- **Payments:** Razorpay order creation, payment verification, and webhook routes are available under `/api/payments`.
 
-- tenant selection in the sidebar
-- role-based dashboard context
-- QR/manual/POS source visibility on orders
-- KOT lifecycle awareness in the dashboard and order details
-- tenant RBAC summary in settings
+Staff invitations expire after seven days and store only a hash of the invite code. Password changes, staff role changes, and staff deactivation invalidate existing sessions.
 
 ## Local development
 
@@ -152,12 +154,14 @@ npm run lint
 npm run build
 ```
 
-## Phase 1 API
+## API overview
 
-- `POST /api/auth/login`, `GET /api/auth/session`, and `POST /api/auth/logout` manage signed, HTTP-only sessions.
-- `GET /api/restaurant` and `GET /api/orders` are scoped to the authenticated tenant and restaurant.
-- `POST /api/orders` creates waiter/POS orders with server-derived prices and an initial KOT in one transaction.
-- `PATCH /api/orders/{orderId}/status` applies role-checked lifecycle transitions and records KOT events.
-- `GET /api/qr/{restaurantSlug}/menu` and `POST /api/qr/{restaurantSlug}/orders` provide the public QR ordering flow.
+- **Authentication:** `POST /api/auth/signup`, `/api/auth/join`, `/api/auth/login`, `/api/auth/logout`, and `/api/auth/change-password`; `GET /api/auth/session` and `/api/auth/account`; `PATCH /api/auth/account`.
+- **Staff:** `GET` and `POST /api/staff`; `PATCH` and `DELETE /api/staff/{staffId}`; `POST /api/staff/invite`.
+- **Restaurant and tables:** `GET /api/restaurant`; `POST /api/restaurant/tables`; `PATCH` and `DELETE /api/restaurant/tables/{tableId}`; `PATCH /api/restaurant/tables/{tableId}/status`.
+- **Menu:** `GET` and `POST /api/restaurant/menu`; `PATCH` and `DELETE /api/restaurant/menu/{menuItemId}`; `PATCH /api/restaurant/menu/{menuItemId}/availability`.
+- **Orders and KOT:** `GET` and `POST /api/orders`; `PATCH /api/orders/{orderId}/status`. Waiter/POS prices are calculated from menu records on the server, and order creation writes the initial KOT in a transaction.
+- **QR ordering:** `GET /api/qr/{restaurantSlug}/menu` and `POST /api/qr/{restaurantSlug}/orders` are public endpoints that use the table's QR token.
+- **Payments:** `POST /api/payments/create-order`, `/api/payments/verify`, and `/api/payments/webhook`.
 
-Apply `prisma/migrations` to a PostgreSQL database before starting the application. The SQL migration is included for environments where Prisma's schema engine cannot be downloaded.
+All migrations are in `prisma/migrations`. Generate the Prisma client with `npm run db:generate`, then apply migrations with `npm run db:migrate`. These commands use the database configured through `DATABASE_URL`; verify the target before applying migrations. `prisma.config.ts` loads `.env.local` for local development. The SQL migrations are checked in, so deployment does not depend on downloading Prisma's schema engine at runtime.
