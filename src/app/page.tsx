@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import TableManagement from "@/components/table-management";
 import {
   Bell,
   ChefHat,
@@ -13,12 +16,15 @@ import {
   Menu as MenuIcon,
   MoreHorizontal,
   PackageCheck,
+  Pencil,
   Plus,
+  QrCode,
   Search,
   Settings,
   ShoppingBag,
   Sparkles,
   Store,
+  UserRound,
   Users,
   Utensils,
   X,
@@ -31,15 +37,24 @@ type Status =
   | "Billing"
   | "Ordering"
   | "Preparing"
-  | "Served";
+  | "Served"
+  | "Inactive";
 type OrderStatus = "New" | "Preparing" | "Ready" | "Served" | "Completed";
 type OrderSource = "QR" | "Waiter" | "POS";
-type Tenant = { name: string; city: string };
+type Tenant = {
+  id?: string;
+  name: string;
+  city: string;
+  cuisine?: string;
+  plan?: "Enterprise" | "Growth";
+  live?: boolean;
+};
 type View =
   | "Dashboard"
   | "Tables"
   | "Orders"
   | "Waiter Mode"
+  | "QR Orders"
   | "Kitchen"
   | "Menu"
   | "Customers"
@@ -49,12 +64,41 @@ type View =
 type Table = {
   id: string;
   databaseId?: string;
+  publicQrToken?: string;
+  active?: boolean;
   seats: number;
   status: Status;
   order: string | null;
   waiter: string;
   elapsed: string;
 };
+function tableFromApi(table: {
+  id: string;
+  number: string;
+  seats: number;
+  status: string;
+  active?: boolean;
+  publicQrToken?: string;
+}): Table {
+  const active = table.active !== false;
+  return {
+    id: table.number,
+    databaseId: table.id,
+    publicQrToken: table.publicQrToken,
+    active,
+    seats: table.seats,
+    status: !active
+      ? "Inactive"
+      : table.status === "AVAILABLE"
+        ? "Available"
+        : table.status === "BILLING"
+          ? "Billing"
+          : "Occupied",
+    order: null,
+    waiter: "-",
+    elapsed: "",
+  };
+}
 type Order = {
   id: string;
   table: string;
@@ -76,7 +120,248 @@ type MenuItem = {
   price: number;
   veg: boolean;
   available: boolean;
+  imageUrl?: string | null;
 };
+const initialTables: Table[] = [
+  {
+    id: "T01",
+    seats: 2,
+    status: "Available",
+    order: null,
+    waiter: "-",
+    elapsed: "",
+  },
+  {
+    id: "T02",
+    seats: 4,
+    status: "Ordering",
+    order: "#1041",
+    waiter: "Meera",
+    elapsed: "8 min",
+  },
+  {
+    id: "T03",
+    seats: 4,
+    status: "Preparing",
+    order: "#1042",
+    waiter: "Rahul",
+    elapsed: "12 min",
+  },
+  {
+    id: "T04",
+    seats: 6,
+    status: "Available",
+    order: null,
+    waiter: "-",
+    elapsed: "",
+  },
+  {
+    id: "T05",
+    seats: 2,
+    status: "Served",
+    order: "#1039",
+    waiter: "Meera",
+    elapsed: "22 min",
+  },
+  {
+    id: "T06",
+    seats: 4,
+    status: "Billing",
+    order: "#1038",
+    waiter: "Rahul",
+    elapsed: "31 min",
+  },
+  {
+    id: "T07",
+    seats: 6,
+    status: "Preparing",
+    order: "#1040",
+    waiter: "Asha",
+    elapsed: "16 min",
+  },
+  {
+    id: "T08",
+    seats: 8,
+    status: "Available",
+    order: null,
+    waiter: "-",
+    elapsed: "",
+  },
+  {
+    id: "T09",
+    seats: 4,
+    status: "Available",
+    order: null,
+    waiter: "-",
+    elapsed: "",
+  },
+  {
+    id: "T10",
+    seats: 2,
+    status: "Served",
+    order: "#1037",
+    waiter: "Asha",
+    elapsed: "26 min",
+  },
+  {
+    id: "T11",
+    seats: 4,
+    status: "Available",
+    order: null,
+    waiter: "-",
+    elapsed: "",
+  },
+  {
+    id: "T12",
+    seats: 6,
+    status: "Ordering",
+    order: "#1036",
+    waiter: "Rahul",
+    elapsed: "5 min",
+  },
+];
+
+const tenantProfiles: Tenant[] = [
+  {
+    id: "anndham",
+    name: "Anndham Family Dhaba",
+    city: "Jaipur",
+    cuisine: "North Indian",
+    plan: "Enterprise",
+    live: true,
+  },
+  {
+    id: "harbor-bay",
+    name: "Harbor Bay Bistro",
+    city: "Pune",
+    cuisine: "Continental",
+    plan: "Growth",
+    live: true,
+  },
+  {
+    id: "saffron-loop",
+    name: "Saffron Loop Cafe",
+    city: "Bengaluru",
+    cuisine: "Modern Indian",
+    plan: "Enterprise",
+    live: false,
+  },
+];
+
+const initialOrders: Order[] = [
+  {
+    id: "#1042",
+    table: "T03",
+    waiter: "Rahul",
+    items: ["Paneer Tikka x1", "Butter Chicken x1", "Butter Naan x4"],
+    amount: 880,
+    status: "Preparing",
+    time: "12 min ago",
+    source: "Waiter",
+    tenantId: "anndham",
+  },
+  {
+    id: "#1041",
+    table: "T02",
+    waiter: "Meera",
+    items: ["Dal Makhani x1", "Garlic Naan x2"],
+    amount: 540,
+    status: "Ready",
+    time: "8 min ago",
+    source: "QR",
+    tenantId: "anndham",
+  },
+  {
+    id: "#1040",
+    table: "T07",
+    waiter: "Asha",
+    items: ["Tandoori Chicken x1", "Jeera Rice x1"],
+    amount: 760,
+    status: "New",
+    time: "16 min ago",
+    source: "QR",
+    tenantId: "anndham",
+  },
+  {
+    id: "#1039",
+    table: "T05",
+    waiter: "Meera",
+    items: ["Kadhai Paneer x1", "Plain Rice x1"],
+    amount: 480,
+    status: "Served",
+    time: "22 min ago",
+    source: "POS",
+    tenantId: "anndham",
+  },
+];
+
+const menuSeed: MenuItem[] = [
+  {
+    name: "Paneer Tikka",
+    description: "Charred cottage cheese, peppers and house spices",
+    category: "Starters",
+    price: 220,
+    veg: true,
+    available: true,
+  },
+  {
+    name: "Butter Chicken",
+    description: "Creamy tomato curry with tandoori chicken",
+    category: "Main Course",
+    price: 320,
+    veg: false,
+    available: true,
+  },
+  {
+    name: "Dal Makhani",
+    description: "Slow-cooked black lentils finished with butter",
+    category: "Main Course",
+    price: 220,
+    veg: true,
+    available: true,
+  },
+  {
+    name: "Kadhai Paneer",
+    description: "Paneer, onion and peppers in a robust masala",
+    category: "Main Course",
+    price: 280,
+    veg: true,
+    available: true,
+  },
+  {
+    name: "Butter Naan",
+    description: "Tandoor-baked naan brushed with cultured butter",
+    category: "Breads",
+    price: 60,
+    veg: true,
+    available: true,
+  },
+  {
+    name: "Garlic Naan",
+    description: "Soft naan with roasted garlic and coriander",
+    category: "Breads",
+    price: 80,
+    veg: true,
+    available: true,
+  },
+  {
+    name: "Masala Chaas",
+    description: "Chilled buttermilk with cumin and mint",
+    category: "Drinks",
+    price: 70,
+    veg: true,
+    available: false,
+  },
+  {
+    name: "Gulab Jamun",
+    description: "Warm khoya dumplings with cardamom syrup",
+    category: "Desserts",
+    price: 120,
+    veg: true,
+    available: true,
+  },
+];
+
 const navItems: { label: View; icon: typeof LayoutDashboard; roles: Role[] }[] =
   [
     { label: "Dashboard", icon: LayoutDashboard, roles: ["Manager"] },
@@ -86,9 +371,10 @@ const navItems: { label: View; icon: typeof LayoutDashboard; roles: Role[] }[] =
       icon: ShoppingBag,
       roles: ["Manager", "Waiter", "Kitchen"],
     },
+    { label: "QR Orders", icon: QrCode, roles: ["Waiter"] },
     { label: "Waiter Mode", icon: Utensils, roles: ["Manager", "Waiter"] },
     { label: "Kitchen", icon: ChefHat, roles: ["Manager", "Kitchen"] },
-    { label: "Menu", icon: MenuIcon, roles: ["Manager"] },
+    { label: "Menu", icon: MenuIcon, roles: ["Manager", "Waiter"] },
     { label: "Customers", icon: Users, roles: ["Manager", "Waiter"] },
     { label: "Reports", icon: CircleDollarSign, roles: ["Manager"] },
     { label: "Settings", icon: Settings, roles: ["Manager"] },
@@ -113,24 +399,29 @@ const sourceTone: Record<OrderSource, string> = {
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 
 export default function Home() {
+  const router = useRouter();
   const [signedIn, setSignedIn] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [role, setRole] = useState<Role>("Manager");
   const [view, setView] = useState<View>("Dashboard");
   const [tables, setTables] = useState<Table[]>([]);
+  const [tablesLoading, setTablesLoading] = useState(true);
+  const [tablesError, setTablesError] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [orderingTable, setOrderingTable] = useState<Table | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [restaurantName, setRestaurantName] = useState("");
   const [restaurantCity, setRestaurantCity] = useState("");
+  const [restaurantSlug, setRestaurantSlug] = useState("");
   const [userName, setUserName] = useState("Manager");
-  const [loginError, setLoginError] = useState("");
   const [toast, setToast] = useState("");
   const [orderItems, setOrderItems] = useState<Record<string, number>>({});
   const [menuSearch, setMenuSearch] = useState("");
   const [menuCategory, setMenuCategory] = useState("All");
   const [orderFilter, setOrderFilter] = useState("All");
+  const [orderSourceFilter, setOrderSourceFilter] = useState("All");
 
   useEffect(() => {
     let mounted = true;
@@ -140,7 +431,11 @@ export default function Home() {
         return response.json();
       })
       .then((data) => {
-        if (!mounted || !data?.user) return;
+        if (!mounted) return;
+        if (!data?.user) {
+          router.replace("/login");
+          return;
+        }
         const nextRole = (data.user.role[0].toUpperCase() +
           data.user.role.slice(1)) as Role;
         setRole(nextRole);
@@ -154,55 +449,34 @@ export default function Home() {
               : "Dashboard",
         );
       })
-      .catch(() => undefined)
+      .catch(() => {
+        if (mounted) router.replace("/login");
+      })
       .finally(() => {
         if (mounted) setAuthReady(true);
       });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!signedIn) return;
     let mounted = true;
     const loadData = async () => {
       try {
-        const [restaurantResponse, ordersResponse] = await Promise.all([
-          fetch("/api/restaurant"),
-          fetch("/api/orders"),
-        ]);
-        if (!restaurantResponse.ok || !ordersResponse.ok) return;
-        const [restaurantData, orderData] = await Promise.all([
-          restaurantResponse.json(),
-          ordersResponse.json(),
-        ]);
+        const restaurantResponse = await fetch("/api/restaurant");
+        const restaurantData = await restaurantResponse.json().catch(() => ({}));
+        if (!restaurantResponse.ok) {
+          throw new Error(restaurantData.error ?? "Restaurant tables could not be loaded");
+        }
         if (!mounted) return;
         setRestaurantName(restaurantData.restaurant.name);
         setRestaurantCity(restaurantData.restaurant.city);
-        setTables(
-          restaurantData.tables.map(
-            (table: {
-              id: string;
-              number: string;
-              seats: number;
-              status: string;
-            }) => ({
-              id: table.number,
-              seats: table.seats,
-              status:
-                table.status === "AVAILABLE"
-                  ? "Available"
-                  : table.status === "BILLING"
-                    ? "Billing"
-                    : "Occupied",
-              order: null,
-              waiter: "-",
-              elapsed: "",
-              databaseId: table.id,
-            }),
-          ),
-        );
+        setRestaurantSlug(restaurantData.restaurant.slug);
+        setTables(restaurantData.tables.map(tableFromApi));
+        setTablesError("");
+        setTablesLoading(false);
         setMenu(
           restaurantData.menu.map(
             (item: {
@@ -213,12 +487,25 @@ export default function Home() {
               price: number;
               vegetarian: boolean;
               available: boolean;
+              imageUrl: string | null;
             }) => ({
               ...item,
               veg: item.vegetarian,
             }),
           ),
         );
+        if (restaurantData.menuAvailable === false) {
+          setToast("Menu data is unavailable. Tables are still available.");
+        }
+
+        try {
+          const ordersResponse = await fetch("/api/orders");
+          const orderData = await ordersResponse.json().catch(() => ({}));
+          if (!ordersResponse.ok) {
+            setToast(orderData.error ?? "Orders could not be loaded");
+            return;
+          }
+          if (!mounted) return;
         setOrders(
           orderData.orders.map(
             (order: {
@@ -249,15 +536,28 @@ export default function Home() {
                 hour: "2-digit",
                 minute: "2-digit",
               }),
-              source: order.source.toUpperCase(),
+              source:
+                order.source.toUpperCase() === "WAITER"
+                  ? "Waiter"
+                  : order.source.toUpperCase() === "QR"
+                    ? "QR"
+                    : "POS",
               menuItemIds: Object.fromEntries(
                 order.items.map((item) => [item.name, item.menuItemId]),
               ),
             }),
           ),
         );
-      } catch {
-        if (mounted) setToast("Could not sync restaurant data");
+        } catch {
+          if (mounted) setToast("Orders could not be loaded. Tables remain available.");
+        }
+      } catch (error: unknown) {
+        if (mounted) {
+          const message = error instanceof Error ? error.message : "Tables could not be loaded";
+          setTablesError(message);
+          setTablesLoading(false);
+          setToast(message);
+        }
       }
     };
     void loadData();
@@ -268,58 +568,31 @@ export default function Home() {
     };
   }, [signedIn]);
 
+  if (!authReady || !signedIn)
+    return <main className="session-loading">Checking your Vistona session...</main>;
+
   async function signOut() {
     try {
       const response = await fetch("/api/auth/logout", { method: "POST" });
       if (!response.ok) {
-        setToast("Sign out failed. Please try again.");
+        notify("Sign out failed. Please try again.");
         return;
       }
-      setSignedIn(false);
-      setLoginError("");
+      router.replace("/login");
+      router.refresh();
     } catch {
-      setToast("Sign out failed. Please try again.");
+      notify("Sign out failed. Please try again.");
     }
   }
-
-  if (!authReady || !signedIn)
-    return (
-      <LoginScreen
-        error={loginError}
-        onSignIn={async (email, password) => {
-          setLoginError("");
-          const response = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-          });
-          const data = await response.json();
-          if (!response.ok) {
-            setLoginError(data.error ?? "Sign-in failed");
-            return;
-          }
-          const nextRole = (data.user.role[0].toUpperCase() +
-            data.user.role.slice(1)) as Role;
-          setRole(nextRole);
-          setUserName(data.user.name);
-          setSignedIn(true);
-          setView(
-            nextRole === "Kitchen"
-              ? "Kitchen"
-              : nextRole === "Waiter"
-                ? "Tables"
-                : "Dashboard",
-          );
-        }}
-      />
-    );
 
   const notify = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(""), 2400);
   };
   const currentTable =
-    selectedTable ?? tables.find((table) => table.id === "T03") ?? tables[0];
+    orderingTable ??
+    tables.find((table) => table.active !== false && table.id === "T03") ??
+    tables.find((table) => table.active !== false);
   const orderTotal = Object.entries(orderItems).reduce(
     (total, [name, quantity]) =>
       total + (menu.find((item) => item.name === name)?.price ?? 0) * quantity,
@@ -331,7 +604,9 @@ export default function Home() {
       (menuCategory === "All" || item.category === menuCategory),
   );
   const filteredOrders = orders.filter(
-    (order) => orderFilter === "All" || order.status === orderFilter,
+    (order) =>
+      (orderFilter === "All" || order.status === orderFilter) &&
+      (orderSourceFilter === "All" || order.source === orderSourceFilter),
   );
 
   function updateOrder(id: string, status: OrderStatus) {
@@ -434,6 +709,7 @@ export default function Home() {
       notify("Table is not available for updates");
       return;
     }
+    const selectedDatabaseId = selectedTable.databaseId;
     const databaseStatus = status.toUpperCase();
     try {
       const response = await fetch(
@@ -454,7 +730,14 @@ export default function Home() {
           table.id === selectedTable.id ? { ...table, status } : table,
         ),
       );
-      setSelectedTable((table) => (table ? { ...table, status } : table));
+      setSelectedTable((table): Table | null =>
+        table ? { ...table, status } : null,
+      );
+      setOrderingTable((table): Table | null =>
+        table && table.databaseId === selectedDatabaseId
+          ? { ...table, status }
+          : table,
+      );
       notify(`${selectedTable.id} is now ${status.toLowerCase()}`);
     } catch {
       notify("Table status update failed");
@@ -547,14 +830,7 @@ export default function Home() {
               <strong>{userName}</strong>
               <span>{role}</span>
             </div>
-            <button
-              className="icon-button"
-              onClick={() => void signOut()}
-              aria-label="Sign out"
-              title="Sign out"
-            >
-              <LogOut size={17} />
-            </button>
+            <MoreHorizontal size={17} />
           </div>
         </div>
       </aside>
@@ -585,6 +861,9 @@ export default function Home() {
               <span>Viewing as</span>
               <strong>{role}</strong>
             </div>
+            {role === "Manager" && <a className="icon-button" href="/manager/staff" aria-label="Staff management" title="Staff management"><Users size={17} /></a>}
+            <a className="icon-button" href="/account" aria-label="Account settings" title="Account settings"><UserRound size={17} /></a>
+            <button className="icon-button" onClick={() => void signOut()} aria-label="Sign out" title="Sign out"><LogOut size={17} /></button>
           </div>
         </header>
 
@@ -602,8 +881,24 @@ export default function Home() {
         {view === "Tables" && (
           <TablesView
             tables={tables}
+            canManage={role === "Manager"}
+            restaurantSlug={restaurantSlug}
+            loading={tablesLoading}
+            error={tablesError}
             onTable={setSelectedTable}
             onNavigate={setView}
+            onTableChanged={(updated) => {
+              setTables((current) => {
+                const existing = current.some(
+                  (table) => table.databaseId === updated.databaseId,
+                );
+                return existing
+                  ? current.map((table) =>
+                      table.databaseId === updated.databaseId ? updated : table,
+                    )
+                  : [...current, updated];
+              });
+            }}
           />
         )}
         {view === "Orders" && (
@@ -611,6 +906,22 @@ export default function Home() {
             orders={filteredOrders}
             filter={orderFilter}
             setFilter={setOrderFilter}
+            sourceFilter={orderSourceFilter}
+            setSourceFilter={setOrderSourceFilter}
+            showSourceFilter={role === "Manager"}
+            title="Service, in one view"
+            onOrder={setSelectedOrder}
+          />
+        )}
+        {view === "QR Orders" && (
+          <OrdersView
+            orders={orders.filter((order) => order.source === "QR")}
+            filter={orderFilter}
+            setFilter={setOrderFilter}
+            sourceFilter="QR"
+            setSourceFilter={() => undefined}
+            showSourceFilter={false}
+            title="QR orders"
             onOrder={setSelectedOrder}
           />
         )}
@@ -640,19 +951,22 @@ export default function Home() {
             </div>
           ))}
         {view === "Kitchen" && (
-          <KitchenView orders={orders} onUpdate={updateOrder} />
+          <KitchenView
+            orders={orders}
+            onUpdate={updateOrder}
+            restaurantName={restaurantName}
+          />
         )}
         {view === "Menu" && (
           <MenuView
             menu={filteredMenu}
             search={menuSearch}
             category={menuCategory}
+            canManage={role === "Manager"}
             setSearch={setMenuSearch}
             setCategory={setMenuCategory}
-            onToggle={(name) => {
-              const item = menu.find((entry) => entry.name === name);
-              if (item) void toggleMenuAvailability(item);
-            }}
+            onToggle={(item) => void toggleMenuAvailability(item)}
+            onStartOrder={() => setView("Tables")}
           />
         )}
         {view === "Customers" && <CustomersView />}
@@ -704,6 +1018,7 @@ function Dashboard({
   onOrder: (order: Order) => void;
   onNavigate: (view: View) => void;
 }) {
+  const activeTables = tables.filter((table) => table.active !== false);
   return (
     <div className="page">
       <div className="page-heading">
@@ -735,9 +1050,9 @@ function Dashboard({
         <Metric
           label="Active tables"
           value={String(
-            tables.filter((table) => table.status !== "Available").length,
+            activeTables.filter((table) => table.status !== "Available").length,
           )}
-          note={`of ${tables.length} tables`}
+          note={`of ${activeTables.length} active tables`}
         />
         <Metric
           label="Pending orders"
@@ -757,7 +1072,7 @@ function Dashboard({
             onClick={() => onNavigate("Tables")}
           />
           <div className="table-grid">
-            {tables.slice(0, 8).map((table) => (
+            {activeTables.slice(0, 8).map((table) => (
               <button
                 className={`table-tile ${table.status.toLowerCase()}`}
                 key={table.id}
@@ -835,163 +1150,36 @@ function Dashboard({
   );
 }
 
-function LoginScreen({
-  onSignIn,
-  error,
-}: {
-  onSignIn: (email: string, password: string) => Promise<void>;
-  error: string;
-}) {
-  const [email, setEmail] = useState("manager@vistona.local");
-  const [password, setPassword] = useState("demo123");
-  return (
-    <main className="login-page">
-      <div className="login-brand">
-        <div className="brand-mark">
-          <Sparkles size={16} />
-        </div>
-        <strong>VISTONA</strong>
-        <span>Restaurant OS</span>
-      </div>
-      <div className="login-wrap">
-        <div className="login-copy">
-          <span className="eyebrow">RESTAURANT MANAGEMENT</span>
-          <h1>
-            Run service
-            <br />
-            with less friction.
-          </h1>
-          <p>One calm workspace for your floor, kitchen and team.</p>
-          <div className="login-line">
-            <span /> <span>Anndham Family Dhaba · Jaipur</span>
-          </div>
-        </div>
-        <section className="login-card">
-          <span className="eyebrow">WELCOME BACK</span>
-          <h2>Sign in to Vistona</h2>
-          <p>Sign in with your restaurant account.</p>
-          <label>
-            Email
-            <input
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </label>
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
-          <button
-            className="primary-button full"
-            onClick={() => void onSignIn(email, password)}
-          >
-            Sign in <ChevronDown size={15} />
-          </button>
-          {error && (
-            <p role="alert" className="login-error">
-              {error}
-            </p>
-          )}
-          <div className="demo-divider">
-            <span>DEMO ACCESS</span>
-          </div>
-          <div className="demo-roles">
-            <button onClick={() => setEmail("manager@vistona.local")}>
-              <strong>Manager</strong>
-              <span>Select demo account</span>
-            </button>
-            <button onClick={() => setEmail("waiter@vistona.local")}>
-              <strong>Waiter</strong>
-              <span>Select demo account</span>
-            </button>
-            <button onClick={() => setEmail("kitchen@vistona.local")}>
-              <strong>Kitchen</strong>
-              <span>Select demo account</span>
-            </button>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
 function TablesView({
   tables,
+  canManage,
+  restaurantSlug,
+  loading,
+  error,
   onTable,
   onNavigate,
+  onTableChanged,
 }: {
   tables: Table[];
+  canManage: boolean;
+  restaurantSlug: string;
+  loading: boolean;
+  error: string;
   onTable: (table: Table) => void;
   onNavigate: (view: View) => void;
+  onTableChanged: (table: Table) => void;
 }) {
-  const [filter, setFilter] = useState("All");
-  const filtered = tables.filter(
-    (table) => filter === "All" || table.status === filter,
-  );
   return (
-    <div className="page">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">TABLES</span>
-          <h1>Floor overview</h1>
-          <p>See every table at a glance.</p>
-        </div>
-        <button
-          className="primary-button"
-          onClick={() => onNavigate("Waiter Mode")}
-        >
-          <Plus size={16} /> Start order
-        </button>
-      </div>
-      <div className="filter-bar">
-        {["All", "Available", "Ordering", "Preparing", "Served", "Billing"].map(
-          (item) => (
-            <button
-              className={filter === item ? "selected" : ""}
-              key={item}
-              onClick={() => setFilter(item)}
-            >
-              {item}
-            </button>
-          ),
-        )}
-      </div>
-      <div className="floor-grid">
-        {filtered.map((table) => (
-          <button
-            className={`floor-card ${table.status.toLowerCase()}`}
-            key={table.id}
-            onClick={() => onTable(table)}
-          >
-            <div className="floor-card-top">
-              <div>
-                <span className="eyebrow">TABLE</span>
-                <h2>{table.id}</h2>
-              </div>
-              <span className={`status-pill ${statusTone[table.status]}`}>
-                {table.status}
-              </span>
-            </div>
-            <div className="floor-meta">
-              <span>{table.seats} seats</span>
-              {table.order && <span>{table.order}</span>}
-            </div>
-            <div className="floor-footer">
-              <span>
-                {table.waiter === "-"
-                  ? "Ready for guests"
-                  : `Waiter: ${table.waiter}`}
-              </span>
-              <span>{table.elapsed || "Available"}</span>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
+    <TableManagement
+      tables={tables}
+      canManage={canManage}
+      restaurantSlug={restaurantSlug}
+      loading={loading}
+      error={error}
+      onSelect={onTable}
+      onStartOrder={() => onNavigate("Waiter Mode")}
+      onTableChanged={onTableChanged}
+    />
   );
 }
 
@@ -999,11 +1187,19 @@ function OrdersView({
   orders,
   filter,
   setFilter,
+  sourceFilter,
+  setSourceFilter,
+  showSourceFilter,
+  title,
   onOrder,
 }: {
   orders: Order[];
   filter: string;
   setFilter: (value: string) => void;
+  sourceFilter: string;
+  setSourceFilter: (value: string) => void;
+  showSourceFilter: boolean;
+  title: string;
   onOrder: (order: Order) => void;
 }) {
   return (
@@ -1011,7 +1207,7 @@ function OrdersView({
       <div className="page-heading">
         <div>
           <span className="eyebrow">ORDERS</span>
-          <h1>Service, in one view</h1>
+          <h1>{title}</h1>
           <p>Follow every ticket from the floor to the pass.</p>
         </div>
         <div className="heading-stat">
@@ -1032,6 +1228,9 @@ function OrdersView({
           ),
         )}
       </div>
+      {showSourceFilter && <div className="filter-bar order-source-filters" aria-label="Filter orders by source">
+        {["All", "QR", "Waiter", "POS"].map((source) => <button className={sourceFilter === source ? "selected" : ""} key={source} onClick={() => setSourceFilter(source)}>{source}</button>)}
+      </div>}
       <div className="orders-table">
         <div className="orders-header">
           <span>Ticket</span>
@@ -1048,7 +1247,7 @@ function OrdersView({
           >
             <strong>
               {order.id}
-              <small>{order.time}</small>
+              <small>{order.time} · {order.source}</small>
             </strong>
             <span>
               {order.table}
@@ -1089,16 +1288,10 @@ function WaiterView({
   onSend: () => void;
   onNavigate: (view: View) => void;
 }) {
-  const [category, setCategory] = useState("Starters");
-  const categories = [
-    "Starters",
-    "Main Course",
-    "Breads",
-    "Drinks",
-    "Desserts",
-  ];
+  const [category, setCategory] = useState("All");
+  const categories = ["All", ...new Set(menu.map((item) => item.category))];
   const items = menu.filter(
-    (item) => item.category === category && item.available,
+    (item) => category === "All" || item.category === category,
   );
   const count = Object.values(orderItems).reduce((a, b) => a + b, 0);
   return (
@@ -1133,9 +1326,13 @@ function WaiterView({
         <div className="waiter-menu-grid">
           {items.map((item) => (
             <div className="food-card" key={item.name}>
-              <div className={`food-art ${item.veg ? "veg" : "nonveg"}`}>
-                <Utensils size={22} />
-              </div>
+              {item.imageUrl ? (
+                <Image className="food-art-image" src={item.imageUrl} alt={item.name} width={82} height={98} unoptimized />
+              ) : (
+                <div className={`food-art ${item.veg ? "veg" : "nonveg"}`}>
+                  <Utensils size={22} />
+                </div>
+              )}
               <div className="food-content">
                 <span className="veg-label">
                   {item.veg ? "VEG" : "NON-VEG"}
@@ -1143,11 +1340,13 @@ function WaiterView({
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
                 <strong>{money(item.price)}</strong>
-                <div className="quantity">
-                  <button onClick={() => onAdd(item.name, -1)}>-</button>
-                  <b>{orderItems[item.name] ?? 0}</b>
-                  <button onClick={() => onAdd(item.name, 1)}>+</button>
-                </div>
+                {item.available ? (
+                  <div className="quantity">
+                    <button onClick={() => onAdd(item.name, -1)} disabled={!orderItems[item.name]}>-</button>
+                    <b>{orderItems[item.name] ?? 0}</b>
+                    <button onClick={() => onAdd(item.name, 1)}>+</button>
+                  </div>
+                ) : <span className="stock-label out-stock">OUT OF STOCK</span>}
               </div>
             </div>
           ))}
@@ -1201,9 +1400,11 @@ function WaiterView({
 function KitchenView({
   orders,
   onUpdate,
+  restaurantName,
 }: {
   orders: Order[];
   onUpdate: (id: string, status: OrderStatus) => void;
+  restaurantName: string;
 }) {
   const columns: OrderStatus[] = ["New", "Preparing", "Ready"];
   return (
@@ -1214,7 +1415,7 @@ function KitchenView({
           <h1>Keep the pass moving.</h1>
         </div>
         <div className="kitchen-live">
-          <span className="live-dot" /> Anndham Family Dhaba <b>·</b>{" "}
+          <span className="live-dot" /> {restaurantName || "Kitchen display"} <b>·</b>{" "}
           {new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -1237,7 +1438,7 @@ function KitchenView({
                     <strong>{order.id}</strong>
                     <span>{order.table}</span>
                   </div>
-                  <p>{order.time}</p>
+                  <p>{order.time} · <span className={`source-badge ${sourceTone[order.source]}`}>{order.source} ORDER</span></p>
                   <ul>
                     {order.items.map((item) => (
                       <li key={item}>{item}</li>
@@ -1259,14 +1460,6 @@ function KitchenView({
                       Mark ready <PackageCheck size={15} />
                     </button>
                   )}
-                  {column === "Ready" && (
-                    <button
-                      className="kitchen-button served"
-                      onClick={() => onUpdate(order.id, "Served")}
-                    >
-                      Served <PackageCheck size={15} />
-                    </button>
-                  )}
                 </div>
               ))}
           </section>
@@ -1280,25 +1473,22 @@ function MenuView({
   menu,
   search,
   category,
+  canManage,
   setSearch,
   setCategory,
   onToggle,
+  onStartOrder,
 }: {
   menu: MenuItem[];
   search: string;
   category: string;
+  canManage: boolean;
   setSearch: (value: string) => void;
   setCategory: (value: string) => void;
-  onToggle: (name: string) => void;
+  onToggle: (item: MenuItem) => void;
+  onStartOrder: () => void;
 }) {
-  const categories = [
-    "All",
-    "Starters",
-    "Main Course",
-    "Breads",
-    "Drinks",
-    "Desserts",
-  ];
+  const categories = ["All", ...new Set(menu.map((item) => item.category))];
   return (
     <div className="page">
       <div className="page-heading">
@@ -1307,12 +1497,15 @@ function MenuView({
           <h1>A menu that stays current.</h1>
           <p>Keep availability and pricing clear for every service.</p>
         </div>
-        <button
-          className="primary-button"
-          onClick={() => alert("Add item form opened")}
-        >
-          <Plus size={16} /> Add item
-        </button>
+        {canManage ? (
+          <a className="primary-button" href="/manager/menu">
+            <Plus size={16} /> Manage menu
+          </a>
+        ) : (
+          <button className="primary-button" onClick={onStartOrder}>
+            <Plus size={16} /> Choose a table
+          </button>
+        )}
       </div>
       <div className="menu-toolbar">
         <div className="search-field">
@@ -1338,9 +1531,13 @@ function MenuView({
       <div className="menu-list">
         {menu.map((item) => (
           <div className="menu-row" key={item.name}>
-            <div className="menu-thumb">
-              <Utensils size={18} />
-            </div>
+            {item.imageUrl ? (
+              <Image className="menu-thumb-image" src={item.imageUrl} alt="" width={42} height={42} unoptimized />
+            ) : (
+              <div className="menu-thumb">
+                <Utensils size={18} />
+              </div>
+            )}
             <div className="menu-name">
               <strong>{item.name}</strong>
               <span>{item.description}</span>
@@ -1350,18 +1547,19 @@ function MenuView({
               {item.veg ? "VEG" : "NON-VEG"}
             </span>
             <strong>{money(item.price)}</strong>
-            <button
-              className={`availability ${item.available ? "on" : "off"}`}
-              onClick={() => onToggle(item.name)}
-            >
-              <span /> {item.available ? "Available" : "Unavailable"}
-            </button>
-            <button
-              className="icon-button subtle"
-              aria-label={`More options for ${item.name}`}
-            >
-              <MoreHorizontal size={17} />
-            </button>
+            {canManage ? (
+              <button
+                className={`availability ${item.available ? "on" : "off"}`}
+                onClick={() => onToggle(item)}
+              >
+                <span /> {item.available ? "In stock" : "Out of stock"}
+              </button>
+            ) : (
+              <span className={`availability ${item.available ? "on" : "off"}`}>
+                <span /> {item.available ? "In stock" : "Out of stock"}
+              </span>
+            )}
+            {canManage && <a className="icon-button subtle" href="/manager/menu" aria-label={`Edit ${item.name}`}><Pencil size={17} /></a>}
           </div>
         ))}
       </div>

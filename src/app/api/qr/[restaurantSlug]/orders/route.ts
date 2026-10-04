@@ -3,19 +3,21 @@ import { z } from "zod";
 import { pool } from "@/lib/database";
 import { createOrder, OrderValidationError } from "@/lib/orders";
 
-const qrOrderSchema = z.object({
-  tableNumber: z.string().trim().max(20).optional(),
-  notes: z.string().trim().max(500).optional(),
-  items: z
-    .array(
-      z.object({
-        menuItemId: z.string().min(1).max(64),
-        quantity: z.number().int().min(1).max(99),
-      }),
-    )
-    .min(1)
-    .max(50),
-});
+const qrOrderSchema = z
+  .object({
+    tableToken: z.string().trim().min(32).max(64),
+    notes: z.string().trim().max(500).optional(),
+    items: z
+      .array(
+        z.object({
+          menuItemId: z.string().min(1).max(64),
+          quantity: z.number().int().min(1).max(99),
+        }),
+      )
+      .min(1)
+      .max(50),
+  })
+  .strict();
 
 export async function POST(
   request: Request,
@@ -43,24 +45,24 @@ export async function POST(
         { status: 404 },
       );
 
-    let tableId: string | null = null;
-    if (parsed.data.tableNumber) {
-      const tableResult = await pool.query(
-        `SELECT id FROM "RestaurantTable"
-          WHERE number = $1 AND "tenantId" = $2 AND "restaurantId" = $3`,
-        [parsed.data.tableNumber, restaurant.tenantId, restaurant.id],
+    const tableResult = await pool.query(
+      `SELECT id FROM "RestaurantTable"
+        WHERE "publicQrToken" = $1 AND "tenantId" = $2 AND "restaurantId" = $3
+          AND active = true`,
+      [parsed.data.tableToken, restaurant.tenantId, restaurant.id],
+    );
+    if (!tableResult.rowCount)
+      return NextResponse.json(
+        { error: "Table QR is invalid or inactive" },
+        { status: 404 },
       );
-      if (!tableResult.rowCount)
-        return NextResponse.json({ error: "Table not found" }, { status: 404 });
-      tableId = tableResult.rows[0].id;
-    }
 
     const order = await createOrder({
       tenantId: restaurant.tenantId,
       restaurantId: restaurant.id,
       userId: null,
       source: "QR",
-      tableId,
+      tableId: tableResult.rows[0].id,
       notes: parsed.data.notes,
       items: parsed.data.items,
     });

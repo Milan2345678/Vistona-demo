@@ -44,6 +44,8 @@ export type MenuItemMinAggregateOutputType = {
   price: runtime.Decimal | null
   vegetarian: boolean | null
   available: boolean | null
+  active: boolean | null
+  imageUrl: string | null
   createdAt: Date | null
 }
 
@@ -57,6 +59,8 @@ export type MenuItemMaxAggregateOutputType = {
   price: runtime.Decimal | null
   vegetarian: boolean | null
   available: boolean | null
+  active: boolean | null
+  imageUrl: string | null
   createdAt: Date | null
 }
 
@@ -70,6 +74,8 @@ export type MenuItemCountAggregateOutputType = {
   price: number
   vegetarian: number
   available: number
+  active: number
+  imageUrl: number
   createdAt: number
   _all: number
 }
@@ -93,6 +99,8 @@ export type MenuItemMinAggregateInputType = {
   price?: true
   vegetarian?: true
   available?: true
+  active?: true
+  imageUrl?: true
   createdAt?: true
 }
 
@@ -106,6 +114,8 @@ export type MenuItemMaxAggregateInputType = {
   price?: true
   vegetarian?: true
   available?: true
+  active?: true
+  imageUrl?: true
   createdAt?: true
 }
 
@@ -119,6 +129,8 @@ export type MenuItemCountAggregateInputType = {
   price?: true
   vegetarian?: true
   available?: true
+  active?: true
+  imageUrl?: true
   createdAt?: true
   _all?: true
 }
@@ -219,6 +231,8 @@ export type MenuItemGroupByOutputType = {
   price: runtime.Decimal
   vegetarian: boolean
   available: boolean
+  active: boolean
+  imageUrl: string | null
   createdAt: Date
   _count: MenuItemCountAggregateOutputType | null
   _avg: MenuItemAvgAggregateOutputType | null
@@ -255,6 +269,8 @@ export type MenuItemWhereInput = {
   price?: Prisma.DecimalFilter<"MenuItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFilter<"MenuItem"> | boolean
   available?: Prisma.BoolFilter<"MenuItem"> | boolean
+  active?: Prisma.BoolFilter<"MenuItem"> | boolean
+  imageUrl?: Prisma.StringNullableFilter<"MenuItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MenuItem"> | Date | string
   restaurant?: Prisma.XOR<Prisma.RestaurantScalarRelationFilter, Prisma.RestaurantWhereInput>
   category?: Prisma.XOR<Prisma.MenuCategoryScalarRelationFilter, Prisma.MenuCategoryWhereInput>
@@ -271,6 +287,8 @@ export type MenuItemOrderByWithRelationInput = {
   price?: Prisma.SortOrder
   vegetarian?: Prisma.SortOrder
   available?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   restaurant?: Prisma.RestaurantOrderByWithRelationInput
   category?: Prisma.MenuCategoryOrderByWithRelationInput
@@ -292,6 +310,8 @@ export type MenuItemWhereUniqueInput = Prisma.AtLeast<{
   price?: Prisma.DecimalFilter<"MenuItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFilter<"MenuItem"> | boolean
   available?: Prisma.BoolFilter<"MenuItem"> | boolean
+  active?: Prisma.BoolFilter<"MenuItem"> | boolean
+  imageUrl?: Prisma.StringNullableFilter<"MenuItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MenuItem"> | Date | string
   restaurant?: Prisma.XOR<Prisma.RestaurantScalarRelationFilter, Prisma.RestaurantWhereInput>
   category?: Prisma.XOR<Prisma.MenuCategoryScalarRelationFilter, Prisma.MenuCategoryWhereInput>
@@ -308,6 +328,8 @@ export type MenuItemOrderByWithAggregationInput = {
   price?: Prisma.SortOrder
   vegetarian?: Prisma.SortOrder
   available?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.MenuItemCountOrderByAggregateInput
   _avg?: Prisma.MenuItemAvgOrderByAggregateInput
@@ -329,6 +351,8 @@ export type MenuItemScalarWhereWithAggregatesInput = {
   price?: Prisma.DecimalWithAggregatesFilter<"MenuItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolWithAggregatesFilter<"MenuItem"> | boolean
   available?: Prisma.BoolWithAggregatesFilter<"MenuItem"> | boolean
+  active?: Prisma.BoolWithAggregatesFilter<"MenuItem"> | boolean
+  imageUrl?: Prisma.StringNullableWithAggregatesFilter<"MenuItem"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MenuItem"> | Date | string
 }
 
@@ -339,6 +363,8 @@ export type MenuItemCreateInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
   restaurant: Prisma.RestaurantCreateNestedOneWithoutMenuItemsInput
   category: Prisma.MenuCategoryCreateNestedOneWithoutItemsInput
@@ -355,6 +381,8 @@ export type MenuItemUncheckedCreateInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
   orderItems?: Prisma.OrderItemUncheckedCreateNestedManyWithoutMenuItemInput
 }
@@ -366,6 +394,8 @@ export type MenuItemUpdateInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutMenuItemsNestedInput
   category?: Prisma.MenuCategoryUpdateOneRequiredWithoutItemsNestedInput
@@ -382,6 +412,8 @@ export type MenuItemUncheckedUpdateInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orderItems?: Prisma.OrderItemUncheckedUpdateManyWithoutMenuItemNestedInput
 }
@@ -396,6 +428,8 @@ export type MenuItemCreateManyInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -406,6 +440,8 @@ export type MenuItemUpdateManyMutationInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -419,6 +455,8 @@ export type MenuItemUncheckedUpdateManyInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -454,6 +492,8 @@ export type MenuItemCountOrderByAggregateInput = {
   price?: Prisma.SortOrder
   vegetarian?: Prisma.SortOrder
   available?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -471,6 +511,8 @@ export type MenuItemMaxOrderByAggregateInput = {
   price?: Prisma.SortOrder
   vegetarian?: Prisma.SortOrder
   available?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -484,6 +526,8 @@ export type MenuItemMinOrderByAggregateInput = {
   price?: Prisma.SortOrder
   vegetarian?: Prisma.SortOrder
   available?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -588,6 +632,10 @@ export type DecimalFieldUpdateOperationsInput = {
   divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type MenuItemCreateNestedOneWithoutOrderItemsInput = {
   create?: Prisma.XOR<Prisma.MenuItemCreateWithoutOrderItemsInput, Prisma.MenuItemUncheckedCreateWithoutOrderItemsInput>
   connectOrCreate?: Prisma.MenuItemCreateOrConnectWithoutOrderItemsInput
@@ -609,6 +657,8 @@ export type MenuItemCreateWithoutRestaurantInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
   category: Prisma.MenuCategoryCreateNestedOneWithoutItemsInput
   orderItems?: Prisma.OrderItemCreateNestedManyWithoutMenuItemInput
@@ -622,6 +672,8 @@ export type MenuItemUncheckedCreateWithoutRestaurantInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
   orderItems?: Prisma.OrderItemUncheckedCreateNestedManyWithoutMenuItemInput
 }
@@ -665,6 +717,8 @@ export type MenuItemScalarWhereInput = {
   price?: Prisma.DecimalFilter<"MenuItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFilter<"MenuItem"> | boolean
   available?: Prisma.BoolFilter<"MenuItem"> | boolean
+  active?: Prisma.BoolFilter<"MenuItem"> | boolean
+  imageUrl?: Prisma.StringNullableFilter<"MenuItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"MenuItem"> | Date | string
 }
 
@@ -675,6 +729,8 @@ export type MenuItemCreateWithoutCategoryInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
   restaurant: Prisma.RestaurantCreateNestedOneWithoutMenuItemsInput
   orderItems?: Prisma.OrderItemCreateNestedManyWithoutMenuItemInput
@@ -687,6 +743,8 @@ export type MenuItemUncheckedCreateWithoutCategoryInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
   orderItems?: Prisma.OrderItemUncheckedCreateNestedManyWithoutMenuItemInput
 }
@@ -724,6 +782,8 @@ export type MenuItemCreateWithoutOrderItemsInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
   restaurant: Prisma.RestaurantCreateNestedOneWithoutMenuItemsInput
   category: Prisma.MenuCategoryCreateNestedOneWithoutItemsInput
@@ -739,6 +799,8 @@ export type MenuItemUncheckedCreateWithoutOrderItemsInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -765,6 +827,8 @@ export type MenuItemUpdateWithoutOrderItemsInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutMenuItemsNestedInput
   category?: Prisma.MenuCategoryUpdateOneRequiredWithoutItemsNestedInput
@@ -780,6 +844,8 @@ export type MenuItemUncheckedUpdateWithoutOrderItemsInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -791,6 +857,8 @@ export type MenuItemCreateManyRestaurantInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -801,6 +869,8 @@ export type MenuItemUpdateWithoutRestaurantInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   category?: Prisma.MenuCategoryUpdateOneRequiredWithoutItemsNestedInput
   orderItems?: Prisma.OrderItemUpdateManyWithoutMenuItemNestedInput
@@ -814,6 +884,8 @@ export type MenuItemUncheckedUpdateWithoutRestaurantInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orderItems?: Prisma.OrderItemUncheckedUpdateManyWithoutMenuItemNestedInput
 }
@@ -826,6 +898,8 @@ export type MenuItemUncheckedUpdateManyWithoutRestaurantInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -836,6 +910,8 @@ export type MenuItemCreateManyCategoryInput = {
   price: runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: string | null
   createdAt?: Date | string
 }
 
@@ -846,6 +922,8 @@ export type MenuItemUpdateWithoutCategoryInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutMenuItemsNestedInput
   orderItems?: Prisma.OrderItemUpdateManyWithoutMenuItemNestedInput
@@ -858,6 +936,8 @@ export type MenuItemUncheckedUpdateWithoutCategoryInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orderItems?: Prisma.OrderItemUncheckedUpdateManyWithoutMenuItemNestedInput
 }
@@ -869,6 +949,8 @@ export type MenuItemUncheckedUpdateManyWithoutCategoryInput = {
   price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   vegetarian?: Prisma.BoolFieldUpdateOperationsInput | boolean
   available?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -913,6 +995,8 @@ export type MenuItemSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   price?: boolean
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: boolean
   createdAt?: boolean
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   category?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
@@ -930,6 +1014,8 @@ export type MenuItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   price?: boolean
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: boolean
   createdAt?: boolean
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   category?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
@@ -945,6 +1031,8 @@ export type MenuItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   price?: boolean
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: boolean
   createdAt?: boolean
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   category?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
@@ -960,10 +1048,12 @@ export type MenuItemSelectScalar = {
   price?: boolean
   vegetarian?: boolean
   available?: boolean
+  active?: boolean
+  imageUrl?: boolean
   createdAt?: boolean
 }
 
-export type MenuItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "restaurantId" | "categoryId" | "name" | "description" | "price" | "vegetarian" | "available" | "createdAt", ExtArgs["result"]["menuItem"]>
+export type MenuItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "restaurantId" | "categoryId" | "name" | "description" | "price" | "vegetarian" | "available" | "active" | "imageUrl" | "createdAt", ExtArgs["result"]["menuItem"]>
 export type MenuItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   category?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
@@ -996,6 +1086,8 @@ export type $MenuItemPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     price: runtime.Decimal
     vegetarian: boolean
     available: boolean
+    active: boolean
+    imageUrl: string | null
     createdAt: Date
   }, ExtArgs["result"]["menuItem"]>
   composites: {}
@@ -1432,6 +1524,8 @@ export interface MenuItemFieldRefs {
   readonly price: Prisma.FieldRef<"MenuItem", 'Decimal'>
   readonly vegetarian: Prisma.FieldRef<"MenuItem", 'Boolean'>
   readonly available: Prisma.FieldRef<"MenuItem", 'Boolean'>
+  readonly active: Prisma.FieldRef<"MenuItem", 'Boolean'>
+  readonly imageUrl: Prisma.FieldRef<"MenuItem", 'String'>
   readonly createdAt: Prisma.FieldRef<"MenuItem", 'DateTime'>
 }
     

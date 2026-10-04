@@ -84,7 +84,7 @@ export async function createOrder(input: OrderScope) {
     if (input.tableId) {
       const table = await client.query(
         `SELECT id FROM "RestaurantTable"
-          WHERE id = $1 AND "tenantId" = $2 AND "restaurantId" = $3`,
+          WHERE id = $1 AND "tenantId" = $2 AND "restaurantId" = $3 AND active = true`,
         [input.tableId, input.tenantId, input.restaurantId],
       );
       if (!table.rowCount)
@@ -94,7 +94,8 @@ export async function createOrder(input: OrderScope) {
     const menuResult = await client.query(
       `SELECT id, name, price::text AS price
          FROM "MenuItem"
-        WHERE id = ANY($1::text[]) AND "tenantId" = $2 AND "restaurantId" = $3 AND available = true`,
+        WHERE id = ANY($1::text[]) AND "tenantId" = $2 AND "restaurantId" = $3
+          AND available = true AND active = true`,
       [[...quantities.keys()], input.tenantId, input.restaurantId],
     );
     if (menuResult.rowCount !== quantities.size) {

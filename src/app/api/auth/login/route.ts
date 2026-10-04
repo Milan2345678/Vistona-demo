@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { issueSessionToken, verifyPassword } from "@/lib/auth";
+import { verifyPassword } from "@/lib/auth";
+import { authenticatedResponse } from "@/lib/auth-response";
 import { pool } from "@/lib/database";
-import { SESSION_COOKIE } from "@/lib/tenant";
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await pool.query(
-      `SELECT id, "tenantId", "restaurantId", name, email, "passwordHash", role
+      `SELECT id, "tenantId", "restaurantId", name, email, "passwordHash", role, "authVersion"
          FROM "User" WHERE email = $1 AND active = true LIMIT 1`,
       [parsed.data.email.trim().toLowerCase()],
     );
@@ -48,35 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const role = String(user.role).toLowerCase() as
-      | "manager"
-      | "waiter"
-      | "kitchen";
-    const token = issueSessionToken({
-      sub: user.id,
-      tenantId: user.tenantId,
-      restaurantId: user.restaurantId,
-      role,
-      email: user.email,
-    });
-    const response = NextResponse.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role,
-        tenantId: user.tenantId,
-        restaurantId: user.restaurantId,
-      },
-    });
-    response.cookies.set(SESSION_COOKIE, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 60 * 60 * 12,
-    });
-    return response;
+    return authenticatedResponse(user);
   } catch (error: unknown) {
     const details = error as { code?: unknown; message?: unknown };
     const message =

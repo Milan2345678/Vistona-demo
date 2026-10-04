@@ -2,27 +2,39 @@
   "info": {
     "_postman_id": "e4c0cb7f-9c44-4d4c-9c63-ccbe0ac4ca61",
     "name": "Vistona API",
-    "description": "Postman collection for the existing Vistona API. See postman/README.md for setup, verified role rules, and run order. Uses Postman's cookie jar for vistona_session. No database or provider secrets are included.",
+    "description": "Tests real restaurant-owner signup, manager-issued staff access, role APIs, account management, existing ordering APIs, and payment endpoints. See postman/README.md for the run order. Uses Postman's HttpOnly cookie jar; no provider/database secrets are included.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
     {
       "key": "managerEmail",
-      "value": "manager@vistona.local",
+      "value": "",
       "type": "string"
     },
-    { "key": "managerPassword", "value": "demo123", "type": "string" },
-    { "key": "waiterEmail", "value": "waiter@vistona.local", "type": "string" },
-    { "key": "waiterPassword", "value": "demo123", "type": "string" },
+    { "key": "managerPassword", "value": "", "type": "string" },
+    { "key": "managerName", "value": "Postman Owner", "type": "string" },
+    {
+      "key": "restaurantName",
+      "value": "Postman Restaurant",
+      "type": "string"
+    },
+    { "key": "restaurantCity", "value": "Pune", "type": "string" },
+    { "key": "waiterEmail", "value": "", "type": "string" },
+    { "key": "waiterPassword", "value": "", "type": "string" },
     {
       "key": "kitchenEmail",
-      "value": "kitchen@vistona.local",
+      "value": "",
       "type": "string"
     },
-    { "key": "kitchenPassword", "value": "demo123", "type": "string" },
+    { "key": "kitchenPassword", "value": "", "type": "string" },
+    { "key": "inviteCode", "value": "", "type": "string" },
+    { "key": "inviteeEmail", "value": "", "type": "string" },
+    { "key": "inviteePassword", "value": "", "type": "string" },
+    { "key": "staffId", "value": "", "type": "string" },
+    { "key": "kitchenStaffId", "value": "", "type": "string" },
     { "key": "milanEmail", "value": "milan@vistona.local", "type": "string" },
-    { "key": "milanPassword", "value": "demo123", "type": "string" },
+    { "key": "milanPassword", "value": "", "type": "string" },
     {
       "key": "restaurantSlug",
       "value": "anndham-family-dhaba",
@@ -35,11 +47,17 @@
     },
     { "key": "tableId", "value": "", "type": "string" },
     { "key": "tableNumber", "value": "T01", "type": "string" },
+    { "key": "tableQrToken", "value": "", "type": "string" },
+    { "key": "tableQrUrl", "value": "", "type": "string" },
     { "key": "menuItemId", "value": "", "type": "string" },
+    { "key": "createdMenuItemId", "value": "", "type": "string" },
+    { "key": "menuDishName", "value": "", "type": "string" },
     { "key": "orderId", "value": "", "type": "string" },
     { "key": "waiterOrderId", "value": "", "type": "string" },
     { "key": "qrOrderId", "value": "", "type": "string" },
     { "key": "foreignTableId", "value": "", "type": "string" },
+    { "key": "foreignQrToken", "value": "", "type": "string" },
+    { "key": "foreignQrToken", "value": "", "type": "string" },
     { "key": "foreignMenuItemId", "value": "", "type": "string" },
     { "key": "foreignOrderId", "value": "", "type": "string" },
     { "key": "razorpayOrderId", "value": "", "type": "string" },
@@ -56,9 +74,47 @@
   ],
   "item": [
     {
-      "name": "01 - Authentication",
-      "description": "Login returns an HttpOnly vistona_session cookie, not a bearer token. Postman maintains the cookie for localhost.",
+      "name": "01 Authentication",
+      "description": "Create a new restaurant manager first. Login sets an HttpOnly vistona_session cookie that Postman maintains for localhost.",
       "item": [
+        {
+          "name": "Create Manager and Restaurant",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{managerName}}\",\n  \"email\": \"{{managerEmail}}\",\n  \"password\": \"{{managerPassword}}\",\n  \"restaurantName\": \"{{restaurantName}}\",\n  \"city\": \"{{restaurantCity}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/signup"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const stamp = Date.now();",
+                  "pm.collectionVariables.set('managerEmail', `owner-${stamp}@example.test`);",
+                  "pm.collectionVariables.set('managerPassword', 'VistonaOwner123!');",
+                  "pm.collectionVariables.set('restaurantName', `Postman Bistro ${stamp}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('new owner and restaurant are created', function () { pm.response.to.have.status(200); });",
+                  "pm.test('signup establishes manager session without returning a token', function () { const body = pm.response.json(); pm.expect(body.user.role).to.eql('manager'); pm.expect(body.user.tenantId).to.be.a('string'); pm.expect(body.user.restaurantId).to.be.a('string'); pm.expect(body.token).to.eql(undefined); });",
+                  "pm.test('signup sets HttpOnly session cookie', function () { const cookie = pm.response.headers.get('Set-Cookie') || ''; pm.expect(cookie).to.include('vistona_session='); pm.expect(cookie.toLowerCase()).to.include('httponly'); });"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "Login Manager",
           "request": {
@@ -172,11 +228,11 @@
       ]
     },
     {
-      "name": "02 - Manager",
-      "description": "Login Manager first. Manager can read its restaurant and toggle menu availability.",
+      "name": "02 Manager",
+      "description": "After manager signup/login, read the new restaurant to capture database IDs.",
       "item": [
         {
-          "name": "Get restaurant (captures seeded IDs)",
+          "name": "Get restaurant (captures current account IDs)",
           "request": { "method": "GET", "url": "{{baseUrl}}/api/restaurant" },
           "event": [
             {
@@ -188,7 +244,7 @@
                   "const body = pm.response.json();",
                   "pm.test('restaurant response includes database-backed tables and menu', function () { pm.expect(body.restaurant.id).to.be.a('string'); pm.expect(body.tables).to.be.an('array'); pm.expect(body.menu).to.be.an('array'); });",
                   "if (body.restaurant) pm.collectionVariables.set('restaurantSlug', body.restaurant.slug);",
-                  "if (body.tables && body.tables.length) { pm.collectionVariables.set('tableId', body.tables[0].id); pm.collectionVariables.set('tableNumber', body.tables[0].number); }",
+                  "if (body.tables && body.tables.length) { pm.collectionVariables.set('tableId', body.tables[0].id); pm.collectionVariables.set('tableNumber', body.tables[0].number); if (body.tables[0].publicQrToken) pm.collectionVariables.set('tableQrToken', body.tables[0].publicQrToken); }",
                   "if (body.menu && body.menu.length) pm.collectionVariables.set('menuItemId', body.menu[0].id);"
                 ]
               }
@@ -223,7 +279,199 @@
       ]
     },
     {
-      "name": "03 - Waiter",
+      "name": "03 Staff Management",
+      "description": "Manager-only staff CRUD and role-bound invitation tests. Run Create Manager and Restaurant and Login Manager first. Join with invite is last because it logs in as the invited user.",
+      "item": [
+        {
+          "name": "List restaurant staff",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/staff" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager can list staff', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().staff).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manager creates Waiter",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Waiter\",\n  \"email\": \"{{waiterEmail}}\",\n  \"password\": \"{{waiterPassword}}\",\n  \"role\": \"WAITER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/staff"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const stamp = Date.now(); pm.collectionVariables.set('waiterEmail', `waiter-${stamp}@example.test`); pm.collectionVariables.set('waiterPassword', 'VistonaWaiter123!');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager creates a waiter in the current restaurant', function () { pm.response.to.have.status(201); const staff = pm.response.json().staff; pm.expect(staff.role).to.eql('WAITER'); pm.expect(staff.email).to.eql(pm.collectionVariables.get('waiterEmail')); pm.expect(staff.passwordHash).to.eql(undefined); if (staff.id) pm.collectionVariables.set('staffId', staff.id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manager creates Kitchen Staff",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Kitchen\",\n  \"email\": \"{{kitchenEmail}}\",\n  \"password\": \"{{kitchenPassword}}\",\n  \"role\": \"KITCHEN\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/staff"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const stamp = Date.now(); pm.collectionVariables.set('kitchenEmail', `kitchen-${stamp}@example.test`); pm.collectionVariables.set('kitchenPassword', 'VistonaKitchen123!');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager creates kitchen staff in the current restaurant', function () { pm.response.to.have.status(201); const staff = pm.response.json().staff; pm.expect(staff.role).to.eql('KITCHEN'); pm.expect(staff.email).to.eql(pm.collectionVariables.get('kitchenEmail')); pm.expect(staff.passwordHash).to.eql(undefined); if (staff.id) pm.collectionVariables.set('kitchenStaffId', staff.id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manager cannot create another Manager as staff",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Escalation Attempt\",\n  \"email\": \"escalation@example.test\",\n  \"password\": \"VistonaStaff123!\",\n  \"role\": \"MANAGER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/staff"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('staff endpoint rejects Manager role escalation', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manager creates Waiter invite",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"WAITER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/staff/invite"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager invite is created once with a fixed role', function () { pm.response.to.have.status(201); const invite = pm.response.json().invite; pm.expect(invite.role).to.eql('WAITER'); pm.expect(invite.code).to.be.a('string'); pm.collectionVariables.set('inviteCode', invite.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manager edits waiter details",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Postman Waiter\",\n  \"active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/staff/{{staffId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager updates scoped staff', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().staff.name).to.eql('Updated Postman Waiter'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Join with manager invite",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\",\n  \"name\": \"Invited Postman Waiter\",\n  \"email\": \"{{inviteeEmail}}\",\n  \"password\": \"{{inviteePassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/join"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('inviteeEmail', `invitee-${Date.now()}@example.test`); pm.collectionVariables.set('inviteePassword', 'VistonaInvite123!');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('valid invite creates a waiter account and session', function () { pm.response.to.have.status(200); const user = pm.response.json().user; pm.expect(user.role).to.eql('waiter'); pm.expect(user.passwordHash).to.eql(undefined); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Waiter",
       "description": "Login Waiter first. Create a WAITER order before running kitchen transition requests.",
       "item": [
         {
@@ -236,7 +484,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('waiter can read restaurant', function () { pm.response.to.have.status(200); });",
-                  "pm.test('waiter response includes tables and menu', function () { const body = pm.response.json(); pm.expect(body.tables).to.be.an('array'); pm.expect(body.menu).to.be.an('array'); });"
+                  "pm.test('waiter sees only active tables and gets no manager QR tokens', function () { const body = pm.response.json(); pm.expect(body.tables).to.be.an('array'); pm.expect(body.tables.every((table) => table.active === true)).to.eql(true); pm.expect(body.tables.every((table) => table.publicQrToken === undefined)).to.eql(true); pm.expect(body.menu).to.be.an('array'); });"
                 ]
               }
             }
@@ -319,6 +567,24 @@
           ]
         },
         {
+          "name": "Waiter reads shared menu including out-of-stock items",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/restaurant/menu"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('waiter reads this restaurant menu and stock flags', function () { pm.response.to.have.status(200); const items = pm.response.json().items; pm.expect(items).to.be.an('array'); pm.expect(items.every((item) => typeof item.available === 'boolean')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Waiter cannot update menu availability",
           "request": {
             "method": "PATCH",
@@ -337,6 +603,111 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('waiter manager-only endpoint is forbidden', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Waiter cannot create menu dishes",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Forbidden Waiter Dish\",\n  \"category\": \"Test\",\n  \"price\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/menu"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('waiter cannot create manager menu items', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Waiter cannot create tables",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"FORBIDDEN-WAITER\",\n  \"seats\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('waiter cannot create manager tables', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Waiter cannot edit tables",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seats\": 99\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables/{{tableId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('waiter cannot edit manager tables', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Waiter cannot remove tables",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/restaurant/tables/{{tableId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('waiter cannot remove manager tables', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Waiter cannot access staff management",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/staff" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('waiter manager-only staff access is forbidden', function () { pm.response.to.have.status(403); });"
                 ]
               }
             }
@@ -393,7 +764,7 @@
       ]
     },
     {
-      "name": "04 - Kitchen",
+      "name": "05 Kitchen",
       "description": "Login Kitchen after creating a waiterOrderId. Run preparation and ready requests in order.",
       "item": [
         {
@@ -500,6 +871,153 @@
           ]
         },
         {
+          "name": "Kitchen cannot access restaurant menu API",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/restaurant/menu"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kitchen cannot access staff-facing menu API', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kitchen cannot access staff management",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/staff" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kitchen manager-only staff access is forbidden', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kitchen cannot create menu dishes",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Forbidden Kitchen Dish\",\n  \"category\": \"Test\",\n  \"price\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/menu"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kitchen cannot create manager menu items', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kitchen cannot create tables",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"FORBIDDEN-KITCHEN\",\n  \"seats\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kitchen cannot create manager tables', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kitchen cannot edit tables",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seats\": 99\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables/{{tableId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kitchen cannot edit manager tables', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kitchen cannot remove tables",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/restaurant/tables/{{tableId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kitchen cannot remove manager tables', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kitchen cannot update table status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"AVAILABLE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables/{{tableId}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('kitchen cannot use waiter table operation', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Kitchen cannot serve order",
           "request": {
             "method": "PATCH",
@@ -526,14 +1044,145 @@
       ]
     },
     {
-      "name": "05 - QR Ordering",
-      "description": "Public endpoints. Run menu first to capture an available menuItemId, then create a QR order.",
+      "name": "06 Account",
+      "description": "Run account requests while signed in as the user whose profile/password is being tested. Password change signs out current and prior sessions.",
+      "item": [
+        {
+          "name": "Get current account",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/account" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('account details load', function () { pm.response.to.have.status(200); const account = pm.response.json().account; pm.expect(account.name).to.be.a('string'); pm.expect(account.email).to.be.a('string'); pm.expect(account.restaurantName).to.be.a('string'); pm.expect(account.active).to.eql(true); pm.expect(account.passwordHash).to.eql(undefined); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update account name",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Postman Owner\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/account"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('account name can be updated', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().account.name).to.eql('Updated Postman Owner'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject self role change",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"MANAGER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/account"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('account API does not accept role changes', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change current password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{managerPassword}}\",\n  \"newPassword\": \"VistonaOwner456!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/change-password"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('password change succeeds and requires reauthentication', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().reauthenticationRequired).to.eql(true); });",
+                  "pm.test('password change clears the session cookie', function () { const cookie = pm.response.headers.get('Set-Cookie') || ''; pm.expect(cookie.toLowerCase()).to.include('max-age=0'); });",
+                  "pm.collectionVariables.set('managerPassword', 'VistonaOwner456!');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Authorization Tests",
+      "description": "Run these unauthenticated API checks after Logout. Waiter/kitchen role denials are also exercised in their role folders.",
+      "item": [
+        {
+          "name": "Unauthenticated staff list is rejected",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/staff" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('staff endpoint requires authentication', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthenticated account read is rejected",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/account" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('account endpoint requires authentication', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 QR Ordering",
+      "description": "Public table-token endpoints. Create a table in 11 Tables first; table number is derived from its QR token, never from the order body.",
       "item": [
         {
           "name": "Get public QR menu",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/qr/{{restaurantSlug}}/menu"
+            "url": "{{baseUrl}}/api/qr/{{restaurantSlug}}/menu?tableToken={{tableQrToken}}"
           },
           "event": [
             {
@@ -543,7 +1192,7 @@
                 "exec": [
                   "pm.test('public QR menu succeeds', function () { pm.response.to.have.status(200); });",
                   "const body = pm.response.json();",
-                  "pm.test('menu contains available items only', function () { pm.expect(body.menu).to.be.an('array'); if (body.menu.length) pm.collectionVariables.set('menuItemId', body.menu[0].id); });"
+                  "pm.test('token menu returns its table and active stock states', function () { pm.expect(body.table.number).to.eql(pm.collectionVariables.get('tableNumber')); pm.expect(body.menu).to.be.an('array'); const available = body.menu.find((item) => item.available); pm.expect(available, 'at least one in-stock item is needed for an order').to.exist; if (available) pm.collectionVariables.set('menuItemId', available.id); });"
                 ]
               }
             }
@@ -556,7 +1205,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tableNumber\": \"{{tableNumber}}\",\n  \"notes\": \"Postman QR order\",\n  \"items\": [\n    { \"menuItemId\": \"{{menuItemId}}\", \"quantity\": 1 }\n  ]\n}",
+              "raw": "{\n  \"tableToken\": \"{{tableQrToken}}\",\n  \"notes\": \"Postman QR order\",\n  \"items\": [\n    { \"menuItemId\": \"{{menuItemId}}\", \"quantity\": 1 }\n  ]\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{baseUrl}}/api/qr/{{restaurantSlug}}/orders"
@@ -575,11 +1224,35 @@
               }
             }
           ]
+        },
+        {
+          "name": "Reject customer-supplied table number",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tableToken\": \"{{tableQrToken}}\",\n  \"tableNumber\": \"T99\",\n  \"items\": [{ \"menuItemId\": \"{{menuItemId}}\", \"quantity\": 1 }]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/qr/{{restaurantSlug}}/orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('customer cannot override QR table number', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "06 - Orders",
+      "name": "09 Orders",
       "description": "Manager workflow. Create the order first, then run each transition in order. GET returns only the active session's tenant/restaurant orders.",
       "item": [
         {
@@ -759,11 +1432,134 @@
       ]
     },
     {
-      "name": "07 - Menu",
-      "description": "The API supports menu reads and manager-only availability updates; category/item create/delete are NOT IMPLEMENTED.",
+      "name": "10 Menu",
+      "description": "Manager-only menu CRUD and stock controls. Categories are created/reused within the current restaurant. Removal is soft and preserves order snapshots.",
       "item": [
         {
-          "name": "Manager sets menu item available",
+          "name": "Get shared restaurant menu",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/restaurant/menu"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager reads active menu including out-of-stock items', function () { pm.response.to.have.status(200); const body = pm.response.json(); pm.expect(body.items).to.be.an('array'); pm.expect(body.categories).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create dish",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{menuDishName}}\",\n  \"description\": \"Postman menu dish\",\n  \"category\": \"Postman Specials\",\n  \"price\": 175,\n  \"vegetarian\": true,\n  \"available\": true,\n  \"imageUrl\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/menu"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('menuDishName', `Postman Dish ${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager creates dish in current restaurant', function () { pm.response.to.have.status(201); const item = pm.response.json().item; pm.expect(item.name).to.eql(pm.collectionVariables.get('menuDishName')); pm.expect(item.price).to.eql(175); pm.expect(item.active).to.eql(true); pm.expect(item.tenantId).to.eql(undefined); pm.expect(item.restaurantId).to.eql(undefined); pm.collectionVariables.set('createdMenuItemId', item.id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit dish without creating a duplicate",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated Postman dish\",\n  \"price\": 185,\n  \"category\": \"Main Course\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/menu/{{createdMenuItemId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager edits existing menu item', function () { pm.response.to.have.status(200); const item = pm.response.json().item; pm.expect(item.id).to.eql(pm.collectionVariables.get('createdMenuItemId')); pm.expect(item.price).to.eql(185); pm.expect(item.category).to.eql('Main Course'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark dish out of stock",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"available\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/menu/{{createdMenuItemId}}/availability"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager toggles item out of stock', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().item.available).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject order containing out-of-stock dish",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tableId\": \"{{tableId}}\",\n  \"items\": [{ \"menuItemId\": \"{{createdMenuItemId}}\", \"quantity\": 1 }]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('backend rejects out-of-stock menu item', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Restore dish in stock",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -772,7 +1568,7 @@
               "raw": "{\n  \"available\": true\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": "{{baseUrl}}/api/restaurant/menu/{{menuItemId}}/availability"
+            "url": "{{baseUrl}}/api/restaurant/menu/{{createdMenuItemId}}/availability"
           },
           "event": [
             {
@@ -780,7 +1576,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('manager menu availability update succeeds', function () { pm.response.to.have.status(200); });"
+                  "pm.test('manager restores item', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().item.available).to.eql(true); });"
                 ]
               }
             }
@@ -789,9 +1585,105 @@
       ]
     },
     {
-      "name": "08 - Tables",
-      "description": "Tables are read from GET /api/restaurant and only status updates are implemented.",
+      "name": "11 Tables",
+      "description": "Run while signed in as MANAGER. Create captures the server table ID and stable QR token; edit and remove are scoped to the authenticated restaurant. Waiters can read active tables and update status only.",
       "item": [
+        {
+          "name": "List tables for current restaurant",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/restaurant" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager gets restaurant tables', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().tables).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create table",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"{{tableNumber}}\",\n  \"seats\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('tableNumber', `P${Date.now().toString().slice(-6)}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager creates a table in the current restaurant', function () { pm.response.to.have.status(201); const table = pm.response.json().table; pm.expect(table.number).to.eql(pm.collectionVariables.get('tableNumber')); pm.expect(table.seats).to.eql(4); pm.expect(table.active).to.eql(true); pm.expect(table.publicQrToken).to.be.a('string'); pm.expect(table.tenantId).to.eql(undefined); pm.expect(table.restaurantId).to.eql(undefined); pm.collectionVariables.set('tableId', table.id); pm.collectionVariables.set('tableQrToken', table.publicQrToken); pm.collectionVariables.set('tableQrUrl', `${pm.collectionVariables.get('baseUrl')}/menu/${pm.collectionVariables.get('restaurantSlug')}/table/${table.publicQrToken}`); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject duplicate table number",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"{{tableNumber}}\",\n  \"seats\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate restaurant table number returns 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit table number and seats",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"{{tableNumber}}-E\",\n  \"seats\": 6,\n  \"status\": \"AVAILABLE\",\n  \"active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables/{{tableId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager edits table within current restaurant', function () { pm.response.to.have.status(200); const table = pm.response.json().table; pm.expect(table.number).to.eql(`${pm.collectionVariables.get('tableNumber')}-E`); pm.expect(table.seats).to.eql(6); pm.expect(table.publicQrToken).to.eql(pm.collectionVariables.get('tableQrToken')); pm.collectionVariables.set('tableNumber', table.number); });"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "Set table available",
           "request": {
@@ -839,16 +1731,34 @@
               }
             }
           ]
+        },
+        {
+          "name": "Deactivate table without deleting order history",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/restaurant/tables/{{tableId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('table is safely deactivated', function () { pm.response.to.have.status(200); const table = pm.response.json().table; pm.expect(table.active).to.eql(false); pm.expect(table.publicQrToken).to.eql(pm.collectionVariables.get('tableQrToken')); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "09 - KOT",
+      "name": "12 KOT",
       "description": "NOT IMPLEMENTED: there is no KOT API route. KOT tickets/events are created with orders and updated as a side effect of order status transitions. No fake request is included.",
       "item": []
     },
     {
-      "name": "10 - Negative/Security Tests",
+      "name": "13 Security and Tenant Tests",
       "description": "Run unauthenticated tests after Logout. Tenant isolation flow: login Milan, capture foreign IDs and QR order, logout, login Anndham Manager, then run cross-tenant ID attempts.",
       "item": [
         {
@@ -965,6 +1875,7 @@
                   "pm.test('Milan restaurant read succeeds', function () { pm.response.to.have.status(200); });",
                   "const body = pm.response.json();",
                   "if (body.tables && body.tables.length) pm.collectionVariables.set('foreignTableId', body.tables[0].id);",
+                  "if (body.tables && body.tables.length && body.tables[0].publicQrToken) pm.collectionVariables.set('foreignQrToken', body.tables[0].publicQrToken);",
                   "if (body.menu && body.menu.length) pm.collectionVariables.set('foreignMenuItemId', body.menu[0].id);",
                   "pm.test('foreign fixture IDs captured', function () { pm.expect(pm.collectionVariables.get('foreignTableId')).to.be.a('string').and.not.empty; pm.expect(pm.collectionVariables.get('foreignMenuItemId')).to.be.a('string').and.not.empty; });"
                 ]
@@ -979,7 +1890,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tableNumber\": \"M01\",\n  \"notes\": \"Postman tenant isolation fixture\",\n  \"items\": [\n    { \"menuItemId\": \"{{foreignMenuItemId}}\", \"quantity\": 1 }\n  ]\n}",
+              "raw": "{\n  \"tableToken\": \"{{foreignQrToken}}\",\n  \"notes\": \"Postman tenant isolation fixture\",\n  \"items\": [\n    { \"menuItemId\": \"{{foreignMenuItemId}}\", \"quantity\": 1 }\n  ]\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{baseUrl}}/api/qr/{{milanRestaurantSlug}}/orders"
@@ -1048,6 +1959,30 @@
           ]
         },
         {
+          "name": "Cannot edit Milan table by foreign ID",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seats\": 99\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/restaurant/tables/{{foreignTableId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('foreign table cannot be edited across restaurant scope', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Cannot update Milan menu item by foreign ID",
           "request": {
             "method": "PATCH",
@@ -1096,6 +2031,66 @@
           ]
         },
         {
+          "name": "Soft-remove Postman-created dish after QR flow",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/restaurant/menu/{{createdMenuItemId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager soft-removes only the temporary test dish', function () { pm.response.to.have.status(200); const item = pm.response.json().item; pm.expect(item.active).to.eql(false); pm.expect(item.name).to.eql(pm.collectionVariables.get('menuDishName')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manager deactivates waiter after access tests",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/staff/{{staffId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('manager deactivates staff instead of deleting the row', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().staff.active).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deactivated waiter cannot log in",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{waiterEmail}}\",\n  \"password\": \"{{waiterPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('inactive staff credentials are rejected', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Payment create-order rejects missing body fields",
           "request": {
             "method": "POST",
@@ -1122,7 +2117,7 @@
       ]
     },
     {
-      "name": "11 - Payments",
+      "name": "14 Payments",
       "description": "Existing payment handlers have no session auth. Create-order contacts Razorpay and needs valid server environment configuration plus an unpaid orderId. Never place provider secrets in this collection.",
       "item": [
         {

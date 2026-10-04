@@ -41,6 +41,7 @@ model Tenant {
   createdAt   DateTime     @default(now())
   users       User[]
   restaurants Restaurant[]
+  staffInvites StaffInvite[]
 }
 
 model Restaurant {
@@ -57,6 +58,7 @@ model Restaurant {
   categories MenuCategory[]
   menuItems  MenuItem[]
   orders     Order[]
+  staffInvites StaffInvite[]
 
   @@unique([id, tenantId])
   @@index([tenantId])
@@ -71,14 +73,33 @@ model User {
   passwordHash String
   role         UserRole
   active       Boolean      @default(true)
+  authVersion  Int          @default(0)
   createdAt    DateTime     @default(now())
   tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
   orders       Order[]
   kotEvents    KotEvent[]
+  createdInvites StaffInvite[] @relation("StaffInviteCreator")
 
   @@unique([id, tenantId])
   @@index([restaurantId, tenantId])
+}
+
+model StaffInvite {
+  id           String     @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId     String
+  restaurantId String
+  role         UserRole
+  tokenHash    String     @unique
+  createdById  String
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime   @default(now())
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  createdBy    User       @relation("StaffInviteCreator", fields: [createdById, tenantId], references: [id, tenantId], onDelete: Cascade)
+
+  @@index([tenantId, restaurantId, expiresAt])
 }
 
 model RestaurantTable {
@@ -88,11 +109,14 @@ model RestaurantTable {
   number       String
   seats        Int
   status       TableStatus  @default(AVAILABLE)
+  active       Boolean      @default(true)
+  publicQrToken String      @unique @default(dbgenerated("gen_random_uuid()::text"))
   restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
   orders       Order[]
 
   @@unique([id, restaurantId, tenantId])
   @@unique([restaurantId, tenantId, number])
+  @@index([restaurantId, tenantId, active])
 }
 
 model MenuCategory {
@@ -118,6 +142,8 @@ model MenuItem {
   price        Decimal      @db.Decimal(10, 2)
   vegetarian   Boolean      @default(false)
   available    Boolean      @default(true)
+  active       Boolean      @default(true)
+  imageUrl     String?
   createdAt    DateTime     @default(now())
   restaurant   Restaurant   @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
   category     MenuCategory @relation(fields: [categoryId, restaurantId, tenantId], references: [id, restaurantId, tenantId], onDelete: Restrict)
@@ -125,7 +151,7 @@ model MenuItem {
 
   @@unique([id, restaurantId, tenantId])
   @@unique([restaurantId, tenantId, name])
-  @@index([restaurantId, tenantId, available])
+  @@index([restaurantId, tenantId, available, active])
 }
 
 model Order {

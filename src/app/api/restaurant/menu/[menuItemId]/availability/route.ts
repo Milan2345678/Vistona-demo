@@ -26,8 +26,8 @@ export async function PATCH(
   try {
     const result = await pool.query(
       `UPDATE "MenuItem" SET available = $4
-        WHERE id = $1 AND "tenantId" = $2 AND "restaurantId" = $3
-        RETURNING id, available`,
+        WHERE id = $1 AND "tenantId" = $2 AND "restaurantId" = $3 AND active = true
+        RETURNING id, available, active`,
       [
         menuItemId,
         auth.session.tenantId,
