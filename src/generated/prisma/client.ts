@@ -57,6 +57,11 @@ export type Restaurant = Prisma.RestaurantModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model StaffInvite
+ * 
+ */
+export type StaffInvite = Prisma.StaffInviteModel
+/**
  * Model RestaurantTable
  * 
  */

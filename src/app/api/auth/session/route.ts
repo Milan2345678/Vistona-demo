@@ -7,10 +7,12 @@ export async function GET() {
   return NextResponse.json({
     user: {
       id: session.sub,
+      name: session.name,
       email: session.email,
       role: session.role,
       tenantId: session.tenantId,
       restaurantId: session.restaurantId,
+      active: true,
     },
   });
 }

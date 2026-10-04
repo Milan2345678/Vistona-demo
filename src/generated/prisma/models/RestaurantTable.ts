@@ -41,6 +41,8 @@ export type RestaurantTableMinAggregateOutputType = {
   number: string | null
   seats: number | null
   status: $Enums.TableStatus | null
+  active: boolean | null
+  publicQrToken: string | null
 }
 
 export type RestaurantTableMaxAggregateOutputType = {
@@ -50,6 +52,8 @@ export type RestaurantTableMaxAggregateOutputType = {
   number: string | null
   seats: number | null
   status: $Enums.TableStatus | null
+  active: boolean | null
+  publicQrToken: string | null
 }
 
 export type RestaurantTableCountAggregateOutputType = {
@@ -59,6 +63,8 @@ export type RestaurantTableCountAggregateOutputType = {
   number: number
   seats: number
   status: number
+  active: number
+  publicQrToken: number
   _all: number
 }
 
@@ -78,6 +84,8 @@ export type RestaurantTableMinAggregateInputType = {
   number?: true
   seats?: true
   status?: true
+  active?: true
+  publicQrToken?: true
 }
 
 export type RestaurantTableMaxAggregateInputType = {
@@ -87,6 +95,8 @@ export type RestaurantTableMaxAggregateInputType = {
   number?: true
   seats?: true
   status?: true
+  active?: true
+  publicQrToken?: true
 }
 
 export type RestaurantTableCountAggregateInputType = {
@@ -96,6 +106,8 @@ export type RestaurantTableCountAggregateInputType = {
   number?: true
   seats?: true
   status?: true
+  active?: true
+  publicQrToken?: true
   _all?: true
 }
 
@@ -192,6 +204,8 @@ export type RestaurantTableGroupByOutputType = {
   number: string
   seats: number
   status: $Enums.TableStatus
+  active: boolean
+  publicQrToken: string
   _count: RestaurantTableCountAggregateOutputType | null
   _avg: RestaurantTableAvgAggregateOutputType | null
   _sum: RestaurantTableSumAggregateOutputType | null
@@ -224,6 +238,8 @@ export type RestaurantTableWhereInput = {
   number?: Prisma.StringFilter<"RestaurantTable"> | string
   seats?: Prisma.IntFilter<"RestaurantTable"> | number
   status?: Prisma.EnumTableStatusFilter<"RestaurantTable"> | $Enums.TableStatus
+  active?: Prisma.BoolFilter<"RestaurantTable"> | boolean
+  publicQrToken?: Prisma.StringFilter<"RestaurantTable"> | string
   restaurant?: Prisma.XOR<Prisma.RestaurantScalarRelationFilter, Prisma.RestaurantWhereInput>
   orders?: Prisma.OrderListRelationFilter
 }
@@ -235,12 +251,15 @@ export type RestaurantTableOrderByWithRelationInput = {
   number?: Prisma.SortOrder
   seats?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  publicQrToken?: Prisma.SortOrder
   restaurant?: Prisma.RestaurantOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
 }
 
 export type RestaurantTableWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  publicQrToken?: string
   id_restaurantId_tenantId?: Prisma.RestaurantTableIdRestaurantIdTenantIdCompoundUniqueInput
   restaurantId_tenantId_number?: Prisma.RestaurantTableRestaurantIdTenantIdNumberCompoundUniqueInput
   AND?: Prisma.RestaurantTableWhereInput | Prisma.RestaurantTableWhereInput[]
@@ -251,9 +270,10 @@ export type RestaurantTableWhereUniqueInput = Prisma.AtLeast<{
   number?: Prisma.StringFilter<"RestaurantTable"> | string
   seats?: Prisma.IntFilter<"RestaurantTable"> | number
   status?: Prisma.EnumTableStatusFilter<"RestaurantTable"> | $Enums.TableStatus
+  active?: Prisma.BoolFilter<"RestaurantTable"> | boolean
   restaurant?: Prisma.XOR<Prisma.RestaurantScalarRelationFilter, Prisma.RestaurantWhereInput>
   orders?: Prisma.OrderListRelationFilter
-}, "id" | "id_restaurantId_tenantId" | "restaurantId_tenantId_number">
+}, "id" | "publicQrToken" | "id_restaurantId_tenantId" | "restaurantId_tenantId_number">
 
 export type RestaurantTableOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -262,6 +282,8 @@ export type RestaurantTableOrderByWithAggregationInput = {
   number?: Prisma.SortOrder
   seats?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  publicQrToken?: Prisma.SortOrder
   _count?: Prisma.RestaurantTableCountOrderByAggregateInput
   _avg?: Prisma.RestaurantTableAvgOrderByAggregateInput
   _max?: Prisma.RestaurantTableMaxOrderByAggregateInput
@@ -279,6 +301,8 @@ export type RestaurantTableScalarWhereWithAggregatesInput = {
   number?: Prisma.StringWithAggregatesFilter<"RestaurantTable"> | string
   seats?: Prisma.IntWithAggregatesFilter<"RestaurantTable"> | number
   status?: Prisma.EnumTableStatusWithAggregatesFilter<"RestaurantTable"> | $Enums.TableStatus
+  active?: Prisma.BoolWithAggregatesFilter<"RestaurantTable"> | boolean
+  publicQrToken?: Prisma.StringWithAggregatesFilter<"RestaurantTable"> | string
 }
 
 export type RestaurantTableCreateInput = {
@@ -286,6 +310,8 @@ export type RestaurantTableCreateInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
   restaurant: Prisma.RestaurantCreateNestedOneWithoutTablesInput
   orders?: Prisma.OrderCreateNestedManyWithoutTableInput
 }
@@ -297,6 +323,8 @@ export type RestaurantTableUncheckedCreateInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTableInput
 }
 
@@ -305,6 +333,8 @@ export type RestaurantTableUpdateInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutTablesNestedInput
   orders?: Prisma.OrderUpdateManyWithoutTableNestedInput
 }
@@ -316,6 +346,8 @@ export type RestaurantTableUncheckedUpdateInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutTableNestedInput
 }
 
@@ -326,6 +358,8 @@ export type RestaurantTableCreateManyInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
 }
 
 export type RestaurantTableUpdateManyMutationInput = {
@@ -333,6 +367,8 @@ export type RestaurantTableUpdateManyMutationInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type RestaurantTableUncheckedUpdateManyInput = {
@@ -342,6 +378,8 @@ export type RestaurantTableUncheckedUpdateManyInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type RestaurantTableListRelationFilter = {
@@ -373,6 +411,8 @@ export type RestaurantTableCountOrderByAggregateInput = {
   number?: Prisma.SortOrder
   seats?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  publicQrToken?: Prisma.SortOrder
 }
 
 export type RestaurantTableAvgOrderByAggregateInput = {
@@ -386,6 +426,8 @@ export type RestaurantTableMaxOrderByAggregateInput = {
   number?: Prisma.SortOrder
   seats?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  publicQrToken?: Prisma.SortOrder
 }
 
 export type RestaurantTableMinOrderByAggregateInput = {
@@ -395,6 +437,8 @@ export type RestaurantTableMinOrderByAggregateInput = {
   number?: Prisma.SortOrder
   seats?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  active?: Prisma.SortOrder
+  publicQrToken?: Prisma.SortOrder
 }
 
 export type RestaurantTableSumOrderByAggregateInput = {
@@ -448,14 +492,6 @@ export type RestaurantTableUncheckedUpdateManyWithoutRestaurantNestedInput = {
   deleteMany?: Prisma.RestaurantTableScalarWhereInput | Prisma.RestaurantTableScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type EnumTableStatusFieldUpdateOperationsInput = {
   set?: $Enums.TableStatus
 }
@@ -481,6 +517,8 @@ export type RestaurantTableCreateWithoutRestaurantInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
   orders?: Prisma.OrderCreateNestedManyWithoutTableInput
 }
 
@@ -489,6 +527,8 @@ export type RestaurantTableUncheckedCreateWithoutRestaurantInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTableInput
 }
 
@@ -528,6 +568,8 @@ export type RestaurantTableScalarWhereInput = {
   number?: Prisma.StringFilter<"RestaurantTable"> | string
   seats?: Prisma.IntFilter<"RestaurantTable"> | number
   status?: Prisma.EnumTableStatusFilter<"RestaurantTable"> | $Enums.TableStatus
+  active?: Prisma.BoolFilter<"RestaurantTable"> | boolean
+  publicQrToken?: Prisma.StringFilter<"RestaurantTable"> | string
 }
 
 export type RestaurantTableCreateWithoutOrdersInput = {
@@ -535,6 +577,8 @@ export type RestaurantTableCreateWithoutOrdersInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
   restaurant: Prisma.RestaurantCreateNestedOneWithoutTablesInput
 }
 
@@ -545,6 +589,8 @@ export type RestaurantTableUncheckedCreateWithoutOrdersInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
 }
 
 export type RestaurantTableCreateOrConnectWithoutOrdersInput = {
@@ -568,6 +614,8 @@ export type RestaurantTableUpdateWithoutOrdersInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutTablesNestedInput
 }
 
@@ -578,6 +626,8 @@ export type RestaurantTableUncheckedUpdateWithoutOrdersInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type RestaurantTableCreateManyRestaurantInput = {
@@ -585,6 +635,8 @@ export type RestaurantTableCreateManyRestaurantInput = {
   number: string
   seats: number
   status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
 }
 
 export type RestaurantTableUpdateWithoutRestaurantInput = {
@@ -592,6 +644,8 @@ export type RestaurantTableUpdateWithoutRestaurantInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUpdateManyWithoutTableNestedInput
 }
 
@@ -600,6 +654,8 @@ export type RestaurantTableUncheckedUpdateWithoutRestaurantInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutTableNestedInput
 }
 
@@ -608,6 +664,8 @@ export type RestaurantTableUncheckedUpdateManyWithoutRestaurantInput = {
   number?: Prisma.StringFieldUpdateOperationsInput | string
   seats?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -648,6 +706,8 @@ export type RestaurantTableSelect<ExtArgs extends runtime.Types.Extensions.Inter
   number?: boolean
   seats?: boolean
   status?: boolean
+  active?: boolean
+  publicQrToken?: boolean
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   orders?: boolean | Prisma.RestaurantTable$ordersArgs<ExtArgs>
   _count?: boolean | Prisma.RestaurantTableCountOutputTypeDefaultArgs<ExtArgs>
@@ -660,6 +720,8 @@ export type RestaurantTableSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   number?: boolean
   seats?: boolean
   status?: boolean
+  active?: boolean
+  publicQrToken?: boolean
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["restaurantTable"]>
 
@@ -670,6 +732,8 @@ export type RestaurantTableSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   number?: boolean
   seats?: boolean
   status?: boolean
+  active?: boolean
+  publicQrToken?: boolean
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["restaurantTable"]>
 
@@ -680,9 +744,11 @@ export type RestaurantTableSelectScalar = {
   number?: boolean
   seats?: boolean
   status?: boolean
+  active?: boolean
+  publicQrToken?: boolean
 }
 
-export type RestaurantTableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "restaurantId" | "number" | "seats" | "status", ExtArgs["result"]["restaurantTable"]>
+export type RestaurantTableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "restaurantId" | "number" | "seats" | "status" | "active" | "publicQrToken", ExtArgs["result"]["restaurantTable"]>
 export type RestaurantTableInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   orders?: boolean | Prisma.RestaurantTable$ordersArgs<ExtArgs>
@@ -708,6 +774,8 @@ export type $RestaurantTablePayload<ExtArgs extends runtime.Types.Extensions.Int
     number: string
     seats: number
     status: $Enums.TableStatus
+    active: boolean
+    publicQrToken: string
   }, ExtArgs["result"]["restaurantTable"]>
   composites: {}
 }
@@ -1139,6 +1207,8 @@ export interface RestaurantTableFieldRefs {
   readonly number: Prisma.FieldRef<"RestaurantTable", 'String'>
   readonly seats: Prisma.FieldRef<"RestaurantTable", 'Int'>
   readonly status: Prisma.FieldRef<"RestaurantTable", 'TableStatus'>
+  readonly active: Prisma.FieldRef<"RestaurantTable", 'Boolean'>
+  readonly publicQrToken: Prisma.FieldRef<"RestaurantTable", 'String'>
 }
     
 

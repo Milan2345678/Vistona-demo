@@ -21,31 +21,47 @@ export async function GET() {
 
     let tables: unknown[] = [];
     let menu: unknown[] = [];
+    let menuAvailable = true;
     if (["manager", "waiter"].includes(auth.session.role)) {
+      const managerView = auth.session.role === "manager";
+      const tableColumns = managerView
+        ? `id, number, seats, status, active, "publicQrToken"`
+        : `id, number, seats, status, active`;
+      const activeFilter = managerView ? "" : "AND active = true";
       const [tableResult, menuResult] = await Promise.all([
         pool.query(
-          `SELECT id, number, seats, status FROM "RestaurantTable"
-            WHERE "restaurantId" = $1 AND "tenantId" = $2 ORDER BY number`,
+          `SELECT ${tableColumns} FROM "RestaurantTable"
+            WHERE "restaurantId" = $1 AND "tenantId" = $2 ${activeFilter}
+            ORDER BY number`,
           [auth.session.restaurantId, auth.session.tenantId],
         ),
-        pool.query(
-          `SELECT i.id, i.name, i.description, i.price, i.vegetarian, i.available, c.name AS category
+        pool
+          .query(
+            `SELECT i.id, i.name, i.description, i.price, i.vegetarian, i.available,
+              i."imageUrl", c.name AS category
              FROM "MenuItem" i JOIN "MenuCategory" c ON c.id = i."categoryId"
               AND c."restaurantId" = i."restaurantId" AND c."tenantId" = i."tenantId"
-            WHERE i."restaurantId" = $1 AND i."tenantId" = $2 ORDER BY c."sortOrder", i.name`,
-          [auth.session.restaurantId, auth.session.tenantId],
-        ),
+            WHERE i."restaurantId" = $1 AND i."tenantId" = $2 AND i.active = true
+            ORDER BY c."sortOrder", i.name`,
+              [auth.session.restaurantId, auth.session.tenantId],
+          )
+          .catch((error: unknown) => {
+            console.error("Restaurant menu query failed", error);
+            return null;
+          }),
       ]);
       tables = tableResult.rows;
-      menu = menuResult.rows.map((item) => ({
+      menu = (menuResult?.rows ?? []).map((item) => ({
         ...item,
         price: Number(item.price),
       }));
+      menuAvailable = menuResult !== null;
     }
     return NextResponse.json({
       restaurant: restaurantResult.rows[0],
       tables,
       menu,
+      menuAvailable,
     });
   } catch {
     return NextResponse.json(

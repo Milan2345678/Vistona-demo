@@ -11,6 +11,7 @@
 export type * from './models/Tenant'
 export type * from './models/Restaurant'
 export type * from './models/User'
+export type * from './models/StaffInvite'
 export type * from './models/RestaurantTable'
 export type * from './models/MenuCategory'
 export type * from './models/MenuItem'

@@ -125,6 +125,25 @@ npm run dev
 
 Then open http://localhost:3000.
 
+## Real account onboarding
+
+The seeded users are development fixtures only. Normal onboarding begins at `/signup`, which creates a new tenant, restaurant, and manager account. Managers can add waiter/kitchen accounts from `/manager/staff` or generate a seven-day, single-use invite; staff join at `/join`. Any signed-in user can update their name or password at `/account`.
+
+Apply schema migrations and regenerate the Prisma client before first use:
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+These commands target the database selected by `DATABASE_URL`; verify it points at a development database before applying migrations. `npm run db:seed` remains available for local demos and tenant-isolation fixtures, but is not required for real account signup.
+
+The auth/staff migration adds `User.authVersion` and a tenant/restaurant-scoped `StaffInvite` table. Invites persist only a hash of the random code. Password changes, staff role changes, and deactivation invalidate prior session versions.
+
+Managers can manage restaurant tables from the dashboard's Tables section. Table creation, editing, and removal are server-scoped to the manager's tenant/restaurant; removal deactivates the row so historical orders remain attached. The table migration adds `active` and a stable database-generated `publicQrToken`. Managers can preview/download QR images locally; editing the table number or seat count does not change the token. Waiters see active tables only.
+
+The shared restaurant menu is managed at `/manager/menu` and read by both manager and waiter accounts. Dishes use dynamic restaurant categories, in-stock state, optional image URLs, server-derived restaurant scope, and soft removal so historical order snapshots remain intact. Public customer pages are `/menu/{restaurantSlug}/table/{tableToken}`; their QR menu/order API resolves the table from the opaque token, never from a client-submitted table number. New restaurants start without tables or menu dishes, so managers must add those before waiter or QR ordering.
+
 ## Verification
 
 ```bash

@@ -9,6 +9,8 @@ export type SessionClaims = {
   restaurantId: string;
   role: AppRole;
   email: string;
+  name?: string;
+  version?: number;
   exp?: number;
 };
 

@@ -400,6 +400,7 @@ export const ModelName = {
   Tenant: 'Tenant',
   Restaurant: 'Restaurant',
   User: 'User',
+  StaffInvite: 'StaffInvite',
   RestaurantTable: 'RestaurantTable',
   MenuCategory: 'MenuCategory',
   MenuItem: 'MenuItem',
@@ -423,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "restaurant" | "user" | "restaurantTable" | "menuCategory" | "menuItem" | "order" | "orderItem" | "kotTicket" | "kotEvent" | "payment"
+    modelProps: "tenant" | "restaurant" | "user" | "staffInvite" | "restaurantTable" | "menuCategory" | "menuItem" | "order" | "orderItem" | "kotTicket" | "kotEvent" | "payment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -646,6 +647,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
+        }
+      }
+    }
+    StaffInvite: {
+      payload: Prisma.$StaffInvitePayload<ExtArgs>
+      fields: Prisma.StaffInviteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StaffInviteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StaffInviteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        findFirst: {
+          args: Prisma.StaffInviteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StaffInviteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        findMany: {
+          args: Prisma.StaffInviteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>[]
+        }
+        create: {
+          args: Prisma.StaffInviteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        createMany: {
+          args: Prisma.StaffInviteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StaffInviteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>[]
+        }
+        delete: {
+          args: Prisma.StaffInviteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        update: {
+          args: Prisma.StaffInviteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        deleteMany: {
+          args: Prisma.StaffInviteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StaffInviteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StaffInviteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>[]
+        }
+        upsert: {
+          args: Prisma.StaffInviteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        aggregate: {
+          args: Prisma.StaffInviteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStaffInvite>
+        }
+        groupBy: {
+          args: Prisma.StaffInviteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StaffInviteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StaffInviteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StaffInviteCountAggregateOutputType> | number
         }
       }
     }
@@ -1312,10 +1387,26 @@ export const UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   role: 'role',
   active: 'active',
+  authVersion: 'authVersion',
   createdAt: 'createdAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const StaffInviteScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  restaurantId: 'restaurantId',
+  role: 'role',
+  tokenHash: 'tokenHash',
+  createdById: 'createdById',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type StaffInviteScalarFieldEnum = (typeof StaffInviteScalarFieldEnum)[keyof typeof StaffInviteScalarFieldEnum]
 
 
 export const RestaurantTableScalarFieldEnum = {
@@ -1324,7 +1415,9 @@ export const RestaurantTableScalarFieldEnum = {
   restaurantId: 'restaurantId',
   number: 'number',
   seats: 'seats',
-  status: 'status'
+  status: 'status',
+  active: 'active',
+  publicQrToken: 'publicQrToken'
 } as const
 
 export type RestaurantTableScalarFieldEnum = (typeof RestaurantTableScalarFieldEnum)[keyof typeof RestaurantTableScalarFieldEnum]
@@ -1351,6 +1444,8 @@ export const MenuItemScalarFieldEnum = {
   price: 'price',
   vegetarian: 'vegetarian',
   available: 'available',
+  active: 'active',
+  imageUrl: 'imageUrl',
   createdAt: 'createdAt'
 } as const
 
@@ -1763,6 +1858,7 @@ export type GlobalOmitConfig = {
   tenant?: Prisma.TenantOmit
   restaurant?: Prisma.RestaurantOmit
   user?: Prisma.UserOmit
+  staffInvite?: Prisma.StaffInviteOmit
   restaurantTable?: Prisma.RestaurantTableOmit
   menuCategory?: Prisma.MenuCategoryOmit
   menuItem?: Prisma.MenuItemOmit

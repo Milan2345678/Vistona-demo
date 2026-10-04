@@ -54,6 +54,7 @@ export const ModelName = {
   Tenant: 'Tenant',
   Restaurant: 'Restaurant',
   User: 'User',
+  StaffInvite: 'StaffInvite',
   RestaurantTable: 'RestaurantTable',
   MenuCategory: 'MenuCategory',
   MenuItem: 'MenuItem',
@@ -112,10 +113,26 @@ export const UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   role: 'role',
   active: 'active',
+  authVersion: 'authVersion',
   createdAt: 'createdAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const StaffInviteScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  restaurantId: 'restaurantId',
+  role: 'role',
+  tokenHash: 'tokenHash',
+  createdById: 'createdById',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type StaffInviteScalarFieldEnum = (typeof StaffInviteScalarFieldEnum)[keyof typeof StaffInviteScalarFieldEnum]
 
 
 export const RestaurantTableScalarFieldEnum = {
@@ -124,7 +141,9 @@ export const RestaurantTableScalarFieldEnum = {
   restaurantId: 'restaurantId',
   number: 'number',
   seats: 'seats',
-  status: 'status'
+  status: 'status',
+  active: 'active',
+  publicQrToken: 'publicQrToken'
 } as const
 
 export type RestaurantTableScalarFieldEnum = (typeof RestaurantTableScalarFieldEnum)[keyof typeof RestaurantTableScalarFieldEnum]
@@ -151,6 +170,8 @@ export const MenuItemScalarFieldEnum = {
   price: 'price',
   vegetarian: 'vegetarian',
   available: 'available',
+  active: 'active',
+  imageUrl: 'imageUrl',
   createdAt: 'createdAt'
 } as const
 

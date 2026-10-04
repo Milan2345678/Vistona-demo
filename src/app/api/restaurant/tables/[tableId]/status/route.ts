@@ -26,7 +26,7 @@ export async function PATCH(
   try {
     const result = await pool.query(
       `UPDATE "RestaurantTable" SET status = $4
-        WHERE id = $1 AND "tenantId" = $2 AND "restaurantId" = $3
+        WHERE id = $1 AND "tenantId" = $2 AND "restaurantId" = $3 AND active = true
         RETURNING id, number, seats, status`,
       [
         tableId,
