@@ -16,11 +16,17 @@ export async function GET(
   try {
     const result = await pool.query(
       `SELECT o.id, o.number, o.status, o."paymentStatus", o."createdAt",
+              p.method AS "paymentMethod",
               o."totalAmount", r.name AS "restaurantName", t.number AS "tableNumber"
          FROM "Order" o
          JOIN "Restaurant" r ON r.id = o."restaurantId" AND r."tenantId" = o."tenantId"
          JOIN "RestaurantTable" t ON t.id = o."tableId"
            AND t."restaurantId" = o."restaurantId" AND t."tenantId" = o."tenantId"
+         LEFT JOIN LATERAL (
+           SELECT method FROM "Payment"
+            WHERE "orderId" = o.id AND status = 'PAID'
+            ORDER BY "createdAt" DESC LIMIT 1
+         ) p ON true
         WHERE o.id = $1 AND r.slug = $2 AND t."publicQrToken" = $3
           AND o.source = 'QR'`,
       [orderId, restaurantSlug, tableToken],
@@ -37,6 +43,9 @@ export async function GET(
         number: order.number,
         status: String(order.status).toLowerCase(),
         paymentStatus: String(order.paymentStatus).toLowerCase(),
+        paymentMethod: order.paymentMethod
+          ? String(order.paymentMethod).toLowerCase()
+          : null,
         amount: Number(order.totalAmount),
         createdAt: createdAt.toISOString(),
         estimatedReadyAt: new Date(

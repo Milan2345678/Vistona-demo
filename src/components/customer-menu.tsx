@@ -4,15 +4,20 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import {
   Check,
+  ChevronRight,
+  Clock3,
   Droplets,
   FileDown,
+  Leaf,
   Minus,
   Plus,
   ReceiptText,
+  Search,
   ShoppingBag,
   Utensils,
 } from "lucide-react";
 import PayButton from "@/components/PayButton";
+import { calculateTax } from "@/lib/tax";
 
 type PublicMenuItem = {
   id: string;
@@ -32,6 +37,7 @@ type CustomerOrder = {
   number: number;
   status: "new" | "preparing" | "ready" | "served" | "completed" | "cancelled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentMethod?: string | null;
   amount: number;
   createdAt: string;
   estimatedReadyAt: string;
@@ -56,10 +62,16 @@ export default function CustomerMenu({
 }) {
   const [restaurantName, setRestaurantName] = useState("");
   const [tableNumber, setTableNumber] = useState("");
+  const [gstRate, setGstRate] = useState(0);
+  const [gstInclusive, setGstInclusive] = useState(false);
   const [menu, setMenu] = useState<PublicMenuItem[]>([]);
   const [category, setCategory] = useState("All");
+  const [menuSearch, setMenuSearch] = useState("");
+  const [vegetarianOnly, setVegetarianOnly] = useState(false);
   const [cart, setCart] = useState<Cart>({});
   const [loading, setLoading] = useState(true);
+  const [menuError, setMenuError] = useState("");
+  const [menuLoadAttempt, setMenuLoadAttempt] = useState(0);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
@@ -82,34 +94,53 @@ export default function CustomerMenu({
 
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12_000);
     fetch(
       `/api/qr/${encodeURIComponent(restaurantSlug)}/menu?tableToken=${encodeURIComponent(tableToken)}`,
+      { signal: controller.signal, cache: "no-store" },
     )
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));
         if (!response.ok)
           throw new Error(body.error ?? "Menu could not be loaded");
+        if (
+          !body.restaurant?.name ||
+          !body.table?.number ||
+          !Array.isArray(body.menu)
+        ) {
+          throw new Error("The restaurant returned an incomplete menu response.");
+        }
         return body;
       })
       .then((body) => {
         if (!mounted) return;
         setRestaurantName(body.restaurant.name);
         setTableNumber(body.table.number);
+        setGstRate(Number(body.billing?.gstRate ?? 0));
+        setGstInclusive(Boolean(body.billing?.gstInclusive));
         setMenu(body.menu);
       })
       .catch((cause) => {
-        if (mounted)
-          setError(
-            cause instanceof Error ? cause.message : "Menu could not be loaded",
-          );
+        if (!mounted) return;
+        setMenuError(
+          cause instanceof DOMException && cause.name === "AbortError"
+            ? "Menu request timed out. Check your connection and try again."
+            : cause instanceof Error
+              ? cause.message
+              : "Menu could not be loaded. Check your connection and try again.",
+        );
       })
       .finally(() => {
+        window.clearTimeout(timeout);
         if (mounted) setLoading(false);
       });
     return () => {
       mounted = false;
+      controller.abort();
+      window.clearTimeout(timeout);
     };
-  }, [restaurantSlug, tableToken]);
+  }, [restaurantSlug, tableToken, menuLoadAttempt]);
 
   const refreshOrderStatus = useCallback(
     async (id: string) => {
@@ -123,6 +154,11 @@ export default function CustomerMenu({
           throw new Error(body.error ?? "Order status could not be loaded");
         setTracking({ ...body.order, checkedAt: Date.now() });
         setTrackingError("");
+        if (["completed", "cancelled"].includes(body.order.status)) {
+          sessionStorage.removeItem(
+            `vistona-order:${restaurantSlug}:${tableToken}`,
+          );
+        }
       } catch (cause) {
         setTrackingError(
           cause instanceof Error
@@ -135,6 +171,27 @@ export default function CustomerMenu({
   );
 
   useEffect(() => {
+    const storageKey = `vistona-order:${restaurantSlug}:${tableToken}`;
+    const timer = window.setTimeout(() => {
+      const saved = sessionStorage.getItem(storageKey);
+      if (!saved) return;
+      try {
+        const parsed: { id: string; number: number } = JSON.parse(saved);
+        if (typeof parsed.id === "string" && Number.isInteger(parsed.number)) {
+          setOrderId(parsed.id);
+          setOrderNumber(parsed.number);
+          void refreshOrderStatus(parsed.id);
+        } else {
+          sessionStorage.removeItem(storageKey);
+        }
+      } catch {
+        sessionStorage.removeItem(storageKey);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [restaurantSlug, tableToken, refreshOrderStatus]);
+
+  useEffect(() => {
     if (!orderId) return;
     const interval = window.setInterval(
       () => void refreshOrderStatus(orderId),
@@ -145,7 +202,13 @@ export default function CustomerMenu({
 
   const categories = ["All", ...new Set(menu.map((item) => item.category))];
   const visibleMenu = menu.filter(
-    (item) => category === "All" || item.category === category,
+    (item) =>
+      (category === "All" || item.category === category) &&
+      (!vegetarianOnly || item.vegetarian) &&
+      (!menuSearch.trim() ||
+        `${item.name} ${item.description} ${item.category}`
+          .toLowerCase()
+          .includes(menuSearch.trim().toLowerCase())),
   );
   const selectedItems = Object.entries(cart)
     .map(([id, quantity]) => ({
@@ -155,10 +218,13 @@ export default function CustomerMenu({
     .filter((entry): entry is { item: PublicMenuItem; quantity: number } =>
       Boolean(entry.item && entry.quantity > 0),
     );
-  const total = selectedItems.reduce(
-    (sum, entry) => sum + entry.item.price * entry.quantity,
+  const subtotalCents = selectedItems.reduce(
+    (sum, entry) =>
+      sum + Math.round(entry.item.price * 100) * entry.quantity,
     0,
   );
+  const checkout = calculateTax(subtotalCents, gstRate, gstInclusive);
+  const total = checkout.totalCents / 100;
   const itemCount = selectedItems.reduce(
     (sum, entry) => sum + entry.quantity,
     0,
@@ -275,6 +341,10 @@ export default function CustomerMenu({
         throw new Error(body.error ?? "Order could not be placed");
       setOrderNumber(body.order.number);
       setOrderId(body.order.id);
+      sessionStorage.setItem(
+        `vistona-order:${restaurantSlug}:${tableToken}`,
+        JSON.stringify({ id: body.order.id, number: body.order.number }),
+      );
       setTracking(null);
       setPayAtRestaurant(false);
       setServiceMessages({});
@@ -303,20 +373,26 @@ export default function CustomerMenu({
           </span>
         </a>
         <span className="customer-table-label">
+          <span className="customer-table-label-dot" />
           {tableNumber ? `TABLE ${tableNumber}` : "TABLE QR"}
         </span>
       </header>
 
       <section className="customer-menu-intro">
-        <span className="eyebrow">{restaurantName || "RESTAURANT"}</span>
-        <h1>{restaurantName || "Restaurant menu"}</h1>
-        {tableNumber && (
+        <div>
+          <span className="eyebrow">A GOOD MEAL STARTS HERE</span>
+          <h1>{restaurantName || "Restaurant menu"}</h1>
           <p className="customer-order-table">
-            You are ordering for <strong>Table {tableNumber}</strong>
+            Browse the menu, add your favourites, then place your order.
           </p>
-        )}
+        </div>
+        <div className="customer-menu-intro-aside">
+          <span><Clock3 size={15} /> Est. 30 min</span>
+          <span><Utensils size={15} /> Made fresh to order</span>
+        </div>
       </section>
 
+      {loading && <div className="customer-menu-loading" role="status">Getting the menu ready for you…</div>}
       {error && (
         <div className="customer-menu-error" role="alert">
           {error}
@@ -325,15 +401,34 @@ export default function CustomerMenu({
       {orderNumber !== null && (
         <div className="customer-menu-success" role="status">
           <div className="customer-order-tracking">
-            <strong>Order #{orderNumber}</strong>
-            <span>Table {tableNumber}</span>
-            <p>
-              Order status:{" "}
-              <strong>
-                {tracking
-                  ? orderStatusLabels[tracking.status] ?? tracking.status
-                  : "Loading status..."}
-              </strong>
+            <div className="customer-tracking-heading">
+              <div>
+                <span className="eyebrow">ORDER TRACKING</span>
+                <strong>Order #{orderNumber}</strong>
+              </div>
+              <span className="customer-table-label">TABLE {tableNumber}</span>
+            </div>
+            {tracking && tracking.status !== "cancelled" && (
+              <ol className="customer-order-steps" aria-label="Order progress">
+                {(["new", "preparing", "ready", "served"] as const).map(
+                  (step, index) => {
+                    const statusOrder = ["new", "preparing", "ready", "served", "completed"];
+                    const currentIndex = statusOrder.indexOf(tracking.status);
+                    const isDone = currentIndex >= index;
+                    return (
+                      <li className={isDone ? "complete" : ""} key={step}>
+                        <span>{isDone ? <Check size={13} /> : index + 1}</span>
+                        <small>{["Received", "Preparing", "Ready", "Served"][index]}</small>
+                      </li>
+                    );
+                  },
+                )}
+              </ol>
+            )}
+            <p className="customer-order-current-status">
+              {tracking
+                ? orderStatusLabels[tracking.status] ?? tracking.status
+                : "Confirming your order status…"}
             </p>
             {tracking && !["ready", "served", "completed", "cancelled"].includes(tracking.status) && (
               <p>
@@ -364,7 +459,11 @@ export default function CustomerMenu({
               </p>
             ) : tracking?.paymentStatus === "paid" ? (
               <p className="customer-order-payment customer-order-paid">
-                Online payment complete
+                {tracking.paymentMethod === "cash"
+                  ? "Cash payment recorded by restaurant"
+                  : tracking.paymentMethod === "upi"
+                    ? "UPI payment recorded by restaurant"
+                    : "Online payment complete"}
               </p>
             ) : (
               <div className="customer-order-payment">
@@ -456,6 +555,9 @@ export default function CustomerMenu({
               setOrderId(null);
               setTracking(null);
               setTrackingError("");
+              sessionStorage.removeItem(
+                `vistona-order:${restaurantSlug}:${tableToken}`,
+              );
             }}
           >
             Place another order
@@ -465,6 +567,40 @@ export default function CustomerMenu({
 
       <div className="customer-menu-layout">
         <section className="customer-menu-list" aria-label="Restaurant menu">
+          <div className="customer-menu-list-heading">
+            <div>
+              <span className="eyebrow">FRESH FROM OUR KITCHEN</span>
+              <h2>Explore the menu</h2>
+              <p>{menu.length} dishes · Pick what you love</p>
+            </div>
+            <button
+              type="button"
+              className={`customer-veg-filter ${vegetarianOnly ? "selected" : ""}`}
+              aria-pressed={vegetarianOnly}
+              onClick={() => setVegetarianOnly((current) => !current)}
+            >
+              <Leaf size={15} /> Veg only
+            </button>
+          </div>
+          <label className="customer-menu-search">
+            <Search size={18} />
+            <span className="sr-only">Search dishes</span>
+            <input
+              type="search"
+              value={menuSearch}
+              onChange={(event) => setMenuSearch(event.target.value)}
+              placeholder="Search dishes or categories"
+            />
+            {menuSearch && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setMenuSearch("")}
+              >
+                ×
+              </button>
+            )}
+          </label>
           <div className="customer-category-tabs">
             {categories.map((item) => (
               <button
@@ -478,6 +614,21 @@ export default function CustomerMenu({
           </div>
           {loading ? (
             <div className="customer-menu-empty">Loading menu...</div>
+          ) : menuError ? (
+            <div className="customer-menu-empty customer-menu-load-error" role="alert">
+              <h2>Menu couldn’t load</h2>
+              <p>{menuError}</p>
+              <button
+                className="secondary-button"
+                onClick={() => {
+                  setMenuError("");
+                  setLoading(true);
+                  setMenuLoadAttempt((attempt) => attempt + 1);
+                }}
+              >
+                Try again
+              </button>
+            </div>
           ) : !menu.length ? (
             <div className="customer-menu-empty">
               <h2>Menu is being prepared</h2>
@@ -485,7 +636,20 @@ export default function CustomerMenu({
             </div>
           ) : !visibleMenu.length ? (
             <div className="customer-menu-empty">
-              No dishes in this category.
+              <h2>No dishes found</h2>
+              <p>Try another category or clear your search.</p>
+              {(menuSearch || vegetarianOnly) && (
+                <button
+                  className="secondary-button"
+                  onClick={() => {
+                    setMenuSearch("");
+                    setVegetarianOnly(false);
+                    setCategory("All");
+                  }}
+                >
+                  Show all dishes
+                </button>
+              )}
             </div>
           ) : (
             visibleMenu.map((item) => (
@@ -511,19 +675,21 @@ export default function CustomerMenu({
                   </div>
                 )}
                 <div className="customer-dish-copy">
-                  <span className="customer-dish-category">
-                    {item.category}
-                  </span>
+                  <div className="customer-dish-tags">
+                    <span className={`customer-food-type ${item.vegetarian ? "veg" : "nonveg"}`}>
+                      <i /> {item.vegetarian ? "VEG" : "NON-VEG"}
+                    </span>
+                    <span className="customer-dish-category">{item.category}</span>
+                  </div>
                   <h2>{item.name}</h2>
-                  <p>{item.description}</p>
+                  {item.description && <p>{item.description}</p>}
                   <div className="customer-dish-price">
-                    ₹{item.price.toLocaleString("en-IN")}
+                    ₹{item.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </div>
                 </div>
                 <div className="customer-dish-action">
                   {item.available ? (
                     <>
-                      <span className="stock-label in-stock">IN STOCK</span>
                       <div className="customer-quantity">
                         <button
                           aria-label={`Remove one ${item.name}`}
@@ -550,34 +716,41 @@ export default function CustomerMenu({
           )}
         </section>
 
-        <aside className="customer-cart">
+        <aside className="customer-cart" id="customer-cart">
           <div className="customer-cart-heading">
             <ShoppingBag size={17} />
             <h2>Your order</h2>
-            <span>{itemCount}</span>
+            <span>{itemCount} {itemCount === 1 ? "item" : "items"}</span>
           </div>
-          <p className="customer-cart-table">Table {tableNumber || "--"}</p>
+          <p className="customer-cart-table">
+            <span className="customer-table-label-dot" /> Serving at Table {tableNumber || "--"}
+          </p>
           {!selectedItems.length ? (
-            <p className="customer-cart-empty">
-              Add an available dish to start your order.
-            </p>
+            <div className="customer-cart-empty">
+              <span><ShoppingBag size={21} /></span>
+              <strong>Your cart is waiting</strong>
+              <p>Add dishes from the menu and they’ll appear here.</p>
+            </div>
           ) : (
             <div className="customer-cart-lines">
               {selectedItems.map(({ item, quantity }) => (
                 <div className="customer-cart-line" key={item.id}>
-                  <span>
-                    {item.name} <small>×{quantity}</small>
-                  </span>
+                  <span>{item.name}</span>
                   <strong>
-                    ₹{(item.price * quantity).toLocaleString("en-IN")}
+                    ₹{(item.price * quantity).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </strong>
+                  <div className="customer-cart-quantity">
+                    <button aria-label={`Remove one ${item.name}`} onClick={() => changeQuantity(item, -1)}><Minus size={13} /></button>
+                    <span>{quantity}</span>
+                    <button aria-label={`Add one ${item.name}`} onClick={() => changeQuantity(item, 1)}><Plus size={13} /></button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
           {selectedItems.length > 0 && (
             <div className="customer-order-details">
-              <h3>Order details</h3>
+              <h3>Your details</h3>
               <label>
                 Your name
                 <input
@@ -640,12 +813,20 @@ export default function CustomerMenu({
               </label>
             </div>
           )}
+          {gstRate > 0 && (
+            <div className="customer-cart-tax-lines">
+              <span>Taxable value</span>
+              <span>₹{(checkout.subtotalCents / 100).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+              <span>GST ({gstRate}%)</span>
+              <span>₹{(checkout.taxCents / 100).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+          )}
           <div className="customer-cart-total">
-            <span>Total</span>
-            <strong>₹{total.toLocaleString("en-IN")}</strong>
+            <span>Total payable</span>
+            <strong>₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
           </div>
           <button
-            className="primary-button full"
+            className="customer-place-order"
             onClick={() => void placeOrder()}
             disabled={
               !selectedItems.length ||
@@ -656,14 +837,25 @@ export default function CustomerMenu({
               !/^\+?[1-9]\d{7,14}$/.test(customerPhone.trim())
             }
           >
-            {placing ? "Sending order..." : "Place order"}
+            {placing ? "Sending your order…" : <>Place order <ChevronRight size={18} /></>}
           </button>
           <p className="customer-cart-note">
-            Add your name and a valid mobile number to send your order to the
-            kitchen.
+            {selectedItems.length
+              ? "Your order goes straight to our kitchen."
+              : "No payment until you place your order."}
           </p>
         </aside>
       </div>
+      {itemCount > 0 && orderNumber === null && (
+        <button
+          className="customer-mobile-cart"
+          onClick={() => document.getElementById("customer-cart")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        >
+          <span><ShoppingBag size={18} /> {itemCount} {itemCount === 1 ? "item" : "items"}</span>
+          <strong>View order · ₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong>
+          <ChevronRight size={18} />
+        </button>
+      )}
     </main>
   );
 }

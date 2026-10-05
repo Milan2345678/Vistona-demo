@@ -16,6 +16,7 @@ export async function GET(
   try {
     const result = await pool.query(
       `SELECT o.id, o.number, o.status, o."paymentStatus", o."totalAmount",
+              o."subtotalAmount", o."taxRate", o."taxAmount",
               o."createdAt", o."customerName", o."customerPhone", o.notes,
               o."tenantId", o."restaurantId",
               r.name AS "restaurantName", r.city, t.number AS "tableNumber"
@@ -54,6 +55,8 @@ export async function GET(
         return `${name} x${quantity}  INR ${amount.toFixed(2)}`;
       }),
       "-----------------------------------------------",
+      `Taxable value: INR ${Number(order.subtotalAmount).toFixed(2)}`,
+      `GST (${Number(order.taxRate).toFixed(2)}%): INR ${Number(order.taxAmount).toFixed(2)}`,
       `Total: INR ${Number(order.totalAmount).toFixed(2)}`,
       `Payment: ${String(order.paymentStatus).toLowerCase()}`,
       `Order status: ${String(order.status).toLowerCase()}`,

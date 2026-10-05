@@ -150,6 +150,21 @@ QR customers see a default 30-minute ready-time estimate and the current order s
 
 QR orders can include a customer name, mobile number, and kitchen preferences/instructions. Customers can download a PDF receipt or send bill/water requests from the order confirmation. Staff can review and mark those table requests complete from the Orders or QR Orders screen.
 
+## Customer, kitchen, waiter, and manager operations
+
+- QR customer order tracking survives a refresh in the same browser tab and remains scoped to the table QR token. The customer sees the configured GST treatment and payable total before placing the order.
+- Kitchen staff can advance tickets from New to Preparing to Ready and print the active KOT board from the Kitchen view. Print only includes active tickets and kitchen instructions.
+- Waiters can start a table order or a walk-in/takeaway order. In order details, staff can record money actually received as cash or UPI and download an invoice/receipt. Manual collection is not a substitute for verifying an online payment; the app keeps the payment method on the order.
+- Managers can print the table QR sheet and select **Save as PDF** in the browser print dialog. Sales reports use database orders and distinguish confirmed paid sales from pending collection.
+- Configure the restaurant's GST rate and whether menu prices include GST in **Settings → GST configuration**. The default is 0%; confirm the applicable treatment with the restaurant before enabling tax. Each new order stores its tax snapshot so later setting changes do not rewrite historical bills.
+
+Apply the billing/payment migration on every environment before deploying this version:
+
+```bash
+npm run db:migrate
+npm run db:generate
+```
+
 The auth/staff migration adds `User.authVersion` and a tenant/restaurant-scoped `StaffInvite` table. Invites persist only a hash of the random code. Password changes, staff role changes, and deactivation invalidate prior session versions.
 
 Managers can manage restaurant tables from the dashboard's Tables section. Table creation, editing, and removal are server-scoped to the manager's tenant/restaurant; removal deactivates the row so historical orders remain attached. The table migration adds `active` and a stable database-generated `publicQrToken`. Managers can preview/download QR images locally; editing the table number or seat count does not change the token. Waiters see active tables only.

@@ -29,10 +29,16 @@ async function fetchOrder(
             o."subtotalAmount", o."taxRate", o."taxAmount",
             o."totalAmount", o."createdAt",
             o."customerName", o."customerPhone",
-            t.number AS "tableNumber", u.name AS "waiterName"
+            t.number AS "tableNumber", u.name AS "waiterName",
+            p.method AS "paymentMethod"
        FROM "Order" o
        LEFT JOIN "RestaurantTable" t ON t.id = o."tableId" AND t."tenantId" = o."tenantId"
        LEFT JOIN "User" u ON u.id = o."userId" AND u."tenantId" = o."tenantId"
+       LEFT JOIN LATERAL (
+         SELECT method FROM "Payment"
+          WHERE "orderId" = o.id AND status = 'PAID'
+          ORDER BY "createdAt" DESC LIMIT 1
+       ) p ON true
       WHERE o.id = $1 AND o."tenantId" = $2 AND o."restaurantId" = $3`,
     [orderId, tenantId, restaurantId],
   );
@@ -55,6 +61,9 @@ async function fetchOrder(
     source: String(order.source).toLowerCase(),
     status: String(order.status).toLowerCase(),
     paymentStatus: String(order.paymentStatus).toLowerCase(),
+    paymentMethod: order.paymentMethod
+      ? String(order.paymentMethod).toLowerCase()
+      : null,
     items: itemResult.rows.map((item) => ({
       menuItemId: item.menuItemId,
       name: item.itemName,

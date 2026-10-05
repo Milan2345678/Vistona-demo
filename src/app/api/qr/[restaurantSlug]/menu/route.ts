@@ -9,7 +9,8 @@ export async function GET(
   const tableToken = new URL(request.url).searchParams.get("tableToken");
   try {
     const restaurant = await pool.query(
-      `SELECT id, name, "tenantId" FROM "Restaurant" WHERE slug = $1 LIMIT 1`,
+      `SELECT id, name, "tenantId", "gstRate", "gstInclusive"
+         FROM "Restaurant" WHERE slug = $1 LIMIT 1`,
       [restaurantSlug],
     );
     if (!restaurant.rowCount)
@@ -47,6 +48,10 @@ export async function GET(
     return NextResponse.json({
       restaurant: { name: restaurant.rows[0].name, slug: restaurantSlug },
       table,
+      billing: {
+        gstRate: Number(restaurant.rows[0].gstRate),
+        gstInclusive: restaurant.rows[0].gstInclusive,
+      },
       menu: result.rows.map((item) => ({ ...item, price: Number(item.price) })),
     });
   } catch {
