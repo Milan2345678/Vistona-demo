@@ -1,5 +1,6 @@
 import { inTransaction, pool } from "@/lib/database";
 import type { PoolClient } from "pg";
+import { calculateTax } from "@/lib/tax";
 
 export type OrderInputLine = { menuItemId: string; quantity: number };
 
@@ -25,6 +26,7 @@ async function fetchOrder(
 ) {
   const orderResult = await client.query(
     `SELECT o.id, o.number, o.source, o.status, o."paymentStatus", o.notes,
+            o."subtotalAmount", o."taxRate", o."taxAmount",
             o."totalAmount", o."createdAt",
             o."customerName", o."customerPhone",
             t.number AS "tableNumber", u.name AS "waiterName"
@@ -47,6 +49,9 @@ async function fetchOrder(
   return {
     ...order,
     amount: Number(order.totalAmount),
+    subtotalAmount: Number(order.subtotalAmount),
+    taxRate: Number(order.taxRate),
+    taxAmount: Number(order.taxAmount),
     source: String(order.source).toLowerCase(),
     status: String(order.status).toLowerCase(),
     paymentStatus: String(order.paymentStatus).toLowerCase(),
@@ -127,6 +132,18 @@ export async function createOrder(input: OrderScope) {
         sum + Math.round(Number(line.unitPrice) * 100) * line.quantity,
       0,
     );
+    const restaurantResult = await client.query(
+      `SELECT "gstRate", "gstInclusive" FROM "Restaurant"
+        WHERE id = $1 AND "tenantId" = $2`,
+      [input.restaurantId, input.tenantId],
+    );
+    const restaurantBilling = restaurantResult.rows[0];
+    const taxRate = Number(restaurantBilling?.gstRate ?? 0);
+    const tax = calculateTax(
+      totalCents,
+      taxRate,
+      Boolean(restaurantBilling?.gstInclusive),
+    );
     const lastNumber = await client.query(
       `SELECT COALESCE(MAX(number), 1000)::int AS number FROM "Order"
         WHERE "tenantId" = $1 AND "restaurantId" = $2`,
@@ -134,8 +151,8 @@ export async function createOrder(input: OrderScope) {
     );
     const number = Number(lastNumber.rows[0].number) + 1;
     const orderResult = await client.query(
-      `INSERT INTO "Order" (number, "tenantId", "restaurantId", "tableId", "userId", source, status, notes, "customerName", "customerPhone", "totalAmount", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, 'NEW', $7, $8, $9, $10, NOW())
+      `INSERT INTO "Order" (number, "tenantId", "restaurantId", "tableId", "userId", source, status, notes, "customerName", "customerPhone", "subtotalAmount", "taxRate", "taxAmount", "totalAmount", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, 'NEW', $7, $8, $9, $10, $11, $12, $13, NOW())
        RETURNING id`,
       [
         number,
@@ -147,7 +164,10 @@ export async function createOrder(input: OrderScope) {
         input.notes ?? "",
         input.customerName ?? null,
         input.customerPhone ?? null,
-        (totalCents / 100).toFixed(2),
+        (tax.subtotalCents / 100).toFixed(2),
+        taxRate.toFixed(2),
+        (tax.taxCents / 100).toFixed(2),
+        (tax.totalCents / 100).toFixed(2),
       ],
     );
     const orderId = orderResult.rows[0].id as string;

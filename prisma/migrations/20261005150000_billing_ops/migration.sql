@@ -1,0 +1,13 @@
+ALTER TABLE "Restaurant"
+  ADD COLUMN "gstRate" DECIMAL(5, 2) NOT NULL DEFAULT 0,
+  ADD COLUMN "gstInclusive" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "Order"
+  ADD COLUMN "subtotalAmount" DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  ADD COLUMN "taxRate" DECIMAL(5, 2) NOT NULL DEFAULT 0,
+  ADD COLUMN "taxAmount" DECIMAL(10, 2) NOT NULL DEFAULT 0;
+
+UPDATE "Order" SET "subtotalAmount" = "totalAmount";
+
+ALTER TABLE "Payment"
+  ADD COLUMN "method" TEXT NOT NULL DEFAULT 'RAZORPAY';
