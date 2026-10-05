@@ -177,6 +177,7 @@ export type TenantWhereInput = {
   users?: Prisma.UserListRelationFilter
   restaurants?: Prisma.RestaurantListRelationFilter
   staffInvites?: Prisma.StaffInviteListRelationFilter
+  tableServiceRequests?: Prisma.TableServiceRequestListRelationFilter
 }
 
 export type TenantOrderByWithRelationInput = {
@@ -187,6 +188,7 @@ export type TenantOrderByWithRelationInput = {
   users?: Prisma.UserOrderByRelationAggregateInput
   restaurants?: Prisma.RestaurantOrderByRelationAggregateInput
   staffInvites?: Prisma.StaffInviteOrderByRelationAggregateInput
+  tableServiceRequests?: Prisma.TableServiceRequestOrderByRelationAggregateInput
 }
 
 export type TenantWhereUniqueInput = Prisma.AtLeast<{
@@ -200,6 +202,7 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   users?: Prisma.UserListRelationFilter
   restaurants?: Prisma.RestaurantListRelationFilter
   staffInvites?: Prisma.StaffInviteListRelationFilter
+  tableServiceRequests?: Prisma.TableServiceRequestListRelationFilter
 }, "id" | "slug">
 
 export type TenantOrderByWithAggregationInput = {
@@ -230,6 +233,7 @@ export type TenantCreateInput = {
   users?: Prisma.UserCreateNestedManyWithoutTenantInput
   restaurants?: Prisma.RestaurantCreateNestedManyWithoutTenantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateInput = {
@@ -240,6 +244,7 @@ export type TenantUncheckedCreateInput = {
   users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput
   restaurants?: Prisma.RestaurantUncheckedCreateNestedManyWithoutTenantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUpdateInput = {
@@ -250,6 +255,7 @@ export type TenantUpdateInput = {
   users?: Prisma.UserUpdateManyWithoutTenantNestedInput
   restaurants?: Prisma.RestaurantUpdateManyWithoutTenantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateInput = {
@@ -260,6 +266,7 @@ export type TenantUncheckedUpdateInput = {
   users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput
   restaurants?: Prisma.RestaurantUncheckedUpdateManyWithoutTenantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateManyInput = {
@@ -359,6 +366,20 @@ export type TenantUpdateOneRequiredWithoutStaffInvitesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutStaffInvitesInput, Prisma.TenantUpdateWithoutStaffInvitesInput>, Prisma.TenantUncheckedUpdateWithoutStaffInvitesInput>
 }
 
+export type TenantCreateNestedOneWithoutTableServiceRequestsInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutTableServiceRequestsInput, Prisma.TenantUncheckedCreateWithoutTableServiceRequestsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutTableServiceRequestsInput
+  connect?: Prisma.TenantWhereUniqueInput
+}
+
+export type TenantUpdateOneRequiredWithoutTableServiceRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutTableServiceRequestsInput, Prisma.TenantUncheckedCreateWithoutTableServiceRequestsInput>
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutTableServiceRequestsInput
+  upsert?: Prisma.TenantUpsertWithoutTableServiceRequestsInput
+  connect?: Prisma.TenantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutTableServiceRequestsInput, Prisma.TenantUpdateWithoutTableServiceRequestsInput>, Prisma.TenantUncheckedUpdateWithoutTableServiceRequestsInput>
+}
+
 export type TenantCreateWithoutRestaurantsInput = {
   id?: string
   name: string
@@ -366,6 +387,7 @@ export type TenantCreateWithoutRestaurantsInput = {
   createdAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutTenantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutRestaurantsInput = {
@@ -375,6 +397,7 @@ export type TenantUncheckedCreateWithoutRestaurantsInput = {
   createdAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutRestaurantsInput = {
@@ -400,6 +423,7 @@ export type TenantUpdateWithoutRestaurantsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutTenantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutRestaurantsInput = {
@@ -409,6 +433,7 @@ export type TenantUncheckedUpdateWithoutRestaurantsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutUsersInput = {
@@ -418,6 +443,7 @@ export type TenantCreateWithoutUsersInput = {
   createdAt?: Date | string
   restaurants?: Prisma.RestaurantCreateNestedManyWithoutTenantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutUsersInput = {
@@ -427,6 +453,7 @@ export type TenantUncheckedCreateWithoutUsersInput = {
   createdAt?: Date | string
   restaurants?: Prisma.RestaurantUncheckedCreateNestedManyWithoutTenantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutUsersInput = {
@@ -452,6 +479,7 @@ export type TenantUpdateWithoutUsersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   restaurants?: Prisma.RestaurantUpdateManyWithoutTenantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutUsersInput = {
@@ -461,6 +489,7 @@ export type TenantUncheckedUpdateWithoutUsersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   restaurants?: Prisma.RestaurantUncheckedUpdateManyWithoutTenantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutStaffInvitesInput = {
@@ -470,6 +499,7 @@ export type TenantCreateWithoutStaffInvitesInput = {
   createdAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutTenantInput
   restaurants?: Prisma.RestaurantCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutStaffInvitesInput = {
@@ -479,6 +509,7 @@ export type TenantUncheckedCreateWithoutStaffInvitesInput = {
   createdAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput
   restaurants?: Prisma.RestaurantUncheckedCreateNestedManyWithoutTenantInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutStaffInvitesInput = {
@@ -504,6 +535,7 @@ export type TenantUpdateWithoutStaffInvitesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutTenantNestedInput
   restaurants?: Prisma.RestaurantUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutStaffInvitesInput = {
@@ -513,6 +545,63 @@ export type TenantUncheckedUpdateWithoutStaffInvitesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput
   restaurants?: Prisma.RestaurantUncheckedUpdateManyWithoutTenantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantCreateWithoutTableServiceRequestsInput = {
+  id?: string
+  name: string
+  slug: string
+  createdAt?: Date | string
+  users?: Prisma.UserCreateNestedManyWithoutTenantInput
+  restaurants?: Prisma.RestaurantCreateNestedManyWithoutTenantInput
+  staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutTenantInput
+}
+
+export type TenantUncheckedCreateWithoutTableServiceRequestsInput = {
+  id?: string
+  name: string
+  slug: string
+  createdAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput
+  restaurants?: Prisma.RestaurantUncheckedCreateNestedManyWithoutTenantInput
+  staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutTenantInput
+}
+
+export type TenantCreateOrConnectWithoutTableServiceRequestsInput = {
+  where: Prisma.TenantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantCreateWithoutTableServiceRequestsInput, Prisma.TenantUncheckedCreateWithoutTableServiceRequestsInput>
+}
+
+export type TenantUpsertWithoutTableServiceRequestsInput = {
+  update: Prisma.XOR<Prisma.TenantUpdateWithoutTableServiceRequestsInput, Prisma.TenantUncheckedUpdateWithoutTableServiceRequestsInput>
+  create: Prisma.XOR<Prisma.TenantCreateWithoutTableServiceRequestsInput, Prisma.TenantUncheckedCreateWithoutTableServiceRequestsInput>
+  where?: Prisma.TenantWhereInput
+}
+
+export type TenantUpdateToOneWithWhereWithoutTableServiceRequestsInput = {
+  where?: Prisma.TenantWhereInput
+  data: Prisma.XOR<Prisma.TenantUpdateWithoutTableServiceRequestsInput, Prisma.TenantUncheckedUpdateWithoutTableServiceRequestsInput>
+}
+
+export type TenantUpdateWithoutTableServiceRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutTenantNestedInput
+  restaurants?: Prisma.RestaurantUpdateManyWithoutTenantNestedInput
+  staffInvites?: Prisma.StaffInviteUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateWithoutTableServiceRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput
+  restaurants?: Prisma.RestaurantUncheckedUpdateManyWithoutTenantNestedInput
+  staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 
@@ -524,12 +613,14 @@ export type TenantCountOutputType = {
   users: number
   restaurants: number
   staffInvites: number
+  tableServiceRequests: number
 }
 
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | TenantCountOutputTypeCountUsersArgs
   restaurants?: boolean | TenantCountOutputTypeCountRestaurantsArgs
   staffInvites?: boolean | TenantCountOutputTypeCountStaffInvitesArgs
+  tableServiceRequests?: boolean | TenantCountOutputTypeCountTableServiceRequestsArgs
 }
 
 /**
@@ -563,6 +654,13 @@ export type TenantCountOutputTypeCountStaffInvitesArgs<ExtArgs extends runtime.T
   where?: Prisma.StaffInviteWhereInput
 }
 
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountTableServiceRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TableServiceRequestWhereInput
+}
+
 
 export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -572,6 +670,7 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   users?: boolean | Prisma.Tenant$usersArgs<ExtArgs>
   restaurants?: boolean | Prisma.Tenant$restaurantsArgs<ExtArgs>
   staffInvites?: boolean | Prisma.Tenant$staffInvitesArgs<ExtArgs>
+  tableServiceRequests?: boolean | Prisma.Tenant$tableServiceRequestsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenant"]>
 
@@ -601,6 +700,7 @@ export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   users?: boolean | Prisma.Tenant$usersArgs<ExtArgs>
   restaurants?: boolean | Prisma.Tenant$restaurantsArgs<ExtArgs>
   staffInvites?: boolean | Prisma.Tenant$staffInvitesArgs<ExtArgs>
+  tableServiceRequests?: boolean | Prisma.Tenant$tableServiceRequestsArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -612,6 +712,7 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     users: Prisma.$UserPayload<ExtArgs>[]
     restaurants: Prisma.$RestaurantPayload<ExtArgs>[]
     staffInvites: Prisma.$StaffInvitePayload<ExtArgs>[]
+    tableServiceRequests: Prisma.$TableServiceRequestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1015,6 +1116,7 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
   users<T extends Prisma.Tenant$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   restaurants<T extends Prisma.Tenant$restaurantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$restaurantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RestaurantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   staffInvites<T extends Prisma.Tenant$staffInvitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$staffInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StaffInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tableServiceRequests<T extends Prisma.Tenant$tableServiceRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$tableServiceRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TableServiceRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1510,6 +1612,30 @@ export type Tenant$staffInvitesArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.StaffInviteScalarFieldEnum | Prisma.StaffInviteScalarFieldEnum[]
+}
+
+/**
+ * Tenant.tableServiceRequests
+ */
+export type Tenant$tableServiceRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TableServiceRequest
+   */
+  select?: Prisma.TableServiceRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TableServiceRequest
+   */
+  omit?: Prisma.TableServiceRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TableServiceRequestInclude<ExtArgs> | null
+  where?: Prisma.TableServiceRequestWhereInput
+  orderBy?: Prisma.TableServiceRequestOrderByWithRelationInput | Prisma.TableServiceRequestOrderByWithRelationInput[]
+  cursor?: Prisma.TableServiceRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TableServiceRequestScalarFieldEnum | Prisma.TableServiceRequestScalarFieldEnum[]
 }
 
 /**

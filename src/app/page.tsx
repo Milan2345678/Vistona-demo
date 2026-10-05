@@ -8,8 +8,10 @@ import {
   Bell,
   ChefHat,
   ChevronDown,
+  ArrowRight,
   CircleDollarSign,
   Clock3,
+  Droplets,
   Grid2X2,
   LayoutDashboard,
   LogOut,
@@ -19,6 +21,7 @@ import {
   Pencil,
   Plus,
   QrCode,
+  ReceiptText,
   Search,
   Settings,
   ShoppingBag,
@@ -106,11 +109,22 @@ type Order = {
   items: string[];
   amount: number;
   status: OrderStatus;
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
   time: string;
   source: OrderSource;
   tenantId?: string;
   restaurantOrderId?: string;
   menuItemIds?: Record<string, string>;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  notes?: string;
+};
+type TableServiceRequest = {
+  id: string;
+  type: "BILL" | "WATER";
+  status: "OPEN";
+  createdAt: string;
+  tableNumber: string;
 };
 type MenuItem = {
   id?: string;
@@ -256,6 +270,7 @@ const initialOrders: Order[] = [
     items: ["Paneer Tikka x1", "Butter Chicken x1", "Butter Naan x4"],
     amount: 880,
     status: "Preparing",
+    paymentStatus: "pending",
     time: "12 min ago",
     source: "Waiter",
     tenantId: "anndham",
@@ -267,6 +282,7 @@ const initialOrders: Order[] = [
     items: ["Dal Makhani x1", "Garlic Naan x2"],
     amount: 540,
     status: "Ready",
+    paymentStatus: "pending",
     time: "8 min ago",
     source: "QR",
     tenantId: "anndham",
@@ -278,6 +294,7 @@ const initialOrders: Order[] = [
     items: ["Tandoori Chicken x1", "Jeera Rice x1"],
     amount: 760,
     status: "New",
+    paymentStatus: "pending",
     time: "16 min ago",
     source: "QR",
     tenantId: "anndham",
@@ -289,6 +306,7 @@ const initialOrders: Order[] = [
     items: ["Kadhai Paneer x1", "Plain Rice x1"],
     amount: 480,
     status: "Served",
+    paymentStatus: "pending",
     time: "22 min ago",
     source: "POS",
     tenantId: "anndham",
@@ -397,6 +415,14 @@ const sourceTone: Record<OrderSource, string> = {
   POS: "source-pos",
 };
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
+const paymentLabel = (status: Order["paymentStatus"]) =>
+  status === "paid"
+    ? "Paid online"
+    : status === "refunded"
+      ? "Refunded"
+      : status === "failed"
+        ? "Payment failed"
+        : "Not paid online";
 
 export default function Home() {
   const router = useRouter();
@@ -408,6 +434,8 @@ export default function Home() {
   const [tablesLoading, setTablesLoading] = useState(true);
   const [tablesError, setTablesError] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<TableServiceRequest[]>([]);
+  const [serviceRequestsError, setServiceRequestsError] = useState("");
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [orderingTable, setOrderingTable] = useState<Table | null>(null);
@@ -516,8 +544,12 @@ export default function Home() {
               items: { menuItemId: string; name: string; quantity: number }[];
               amount: number;
               status: string;
+              paymentStatus: "pending" | "paid" | "failed" | "refunded";
               createdAt: string;
               source: string;
+              customerName: string | null;
+              customerPhone: string | null;
+              notes: string;
             }) => ({
               id: `#${order.number}`,
               restaurantOrderId: order.id,
@@ -532,6 +564,7 @@ export default function Home() {
               status:
                 order.status[0].toUpperCase() +
                 order.status.slice(1).toLowerCase(),
+              paymentStatus: order.paymentStatus,
               time: new Date(order.createdAt).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -545,9 +578,24 @@ export default function Home() {
               menuItemIds: Object.fromEntries(
                 order.items.map((item) => [item.name, item.menuItemId]),
               ),
+              customerName: order.customerName,
+              customerPhone: order.customerPhone,
+              notes: order.notes,
             }),
           ),
         );
+        if (role !== "Kitchen") {
+          const requestsResponse = await fetch("/api/service-requests");
+          const requestsData = await requestsResponse.json().catch(() => ({}));
+          if (!requestsResponse.ok) {
+            setServiceRequestsError(
+              requestsData.error ?? "Table service requests could not be loaded",
+            );
+          } else {
+            setServiceRequests(requestsData.requests);
+            setServiceRequestsError("");
+          }
+        }
         } catch {
           if (mounted) setToast("Orders could not be loaded. Tables remain available.");
         }
@@ -566,7 +614,7 @@ export default function Home() {
       mounted = false;
       window.clearInterval(timer);
     };
-  }, [signedIn]);
+  }, [signedIn, role]);
 
   if (!authReady || !signedIn)
     return <main className="session-loading">Checking your Vistona session...</main>;
@@ -623,6 +671,7 @@ export default function Home() {
           notify(data.error ?? "Order update failed");
           return;
         }
+
         const data = await response.json();
         setOrders((current) =>
           current.map((order) =>
@@ -640,6 +689,27 @@ export default function Home() {
       return;
     }
     notify("Order is not available for updates");
+  }
+
+  async function completeServiceRequest(requestId: string) {
+    try {
+      const response = await fetch(`/api/service-requests/${requestId}`, {
+        method: "PATCH",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok)
+        throw new Error(data.error ?? "Request could not be completed");
+      setServiceRequests((current) =>
+        current.filter((request) => request.id !== requestId),
+      );
+      notify("Table request completed");
+    } catch (error) {
+      notify(
+        error instanceof Error
+          ? error.message
+          : "Request could not be completed",
+      );
+    }
   }
 
   function sendToKitchen() {
@@ -686,6 +756,7 @@ export default function Home() {
           ),
           amount: created.amount,
           status: "New",
+          paymentStatus: "pending",
           time: "Just now",
           source: "Waiter",
         },
@@ -911,6 +982,11 @@ export default function Home() {
             showSourceFilter={role === "Manager"}
             title="Service, in one view"
             onOrder={setSelectedOrder}
+            serviceRequests={serviceRequests}
+            serviceRequestsError={serviceRequestsError}
+            onCompleteRequest={(requestId) =>
+              void completeServiceRequest(requestId)
+            }
           />
         )}
         {view === "QR Orders" && (
@@ -923,6 +999,11 @@ export default function Home() {
             showSourceFilter={false}
             title="QR orders"
             onOrder={setSelectedOrder}
+            serviceRequests={serviceRequests}
+            serviceRequestsError={serviceRequestsError}
+            onCompleteRequest={(requestId) =>
+              void completeServiceRequest(requestId)
+            }
           />
         )}
         {view === "Waiter Mode" &&
@@ -971,7 +1052,14 @@ export default function Home() {
         )}
         {view === "Customers" && <CustomersView />}
         {view === "Reports" && <ReportsView />}
-        {view === "Settings" && <SettingsView />}
+        {view === "Settings" && (
+          <SettingsView
+            restaurantName={restaurantName}
+            restaurantCity={restaurantCity}
+            tables={tables}
+            onNavigate={setView}
+          />
+        )}
       </main>
 
       {selectedTable && (
@@ -987,7 +1075,13 @@ export default function Home() {
       )}
       {selectedOrder && (
         <OrderPanel
-          order={selectedOrder}
+          order={
+            orders.find(
+              (order) =>
+                order.restaurantOrderId === selectedOrder.restaurantOrderId,
+            ) ?? selectedOrder
+          }
+          canComplete={role === "Manager"}
           onClose={() => setSelectedOrder(null)}
           onUpdate={updateOrder}
         />
@@ -1192,6 +1286,9 @@ function OrdersView({
   showSourceFilter,
   title,
   onOrder,
+  serviceRequests,
+  serviceRequestsError,
+  onCompleteRequest,
 }: {
   orders: Order[];
   filter: string;
@@ -1201,6 +1298,9 @@ function OrdersView({
   showSourceFilter: boolean;
   title: string;
   onOrder: (order: Order) => void;
+  serviceRequests: TableServiceRequest[];
+  serviceRequestsError: string;
+  onCompleteRequest: (requestId: string) => void;
 }) {
   return (
     <div className="page">
@@ -1215,6 +1315,54 @@ function OrdersView({
           <span>visible tickets</span>
         </div>
       </div>
+      <section className="table-service-queue">
+        <div className="table-service-queue-heading">
+          <div>
+            <span className="eyebrow">TABLE SERVICE</span>
+            <h2>Guest requests</h2>
+          </div>
+          <span className="table-service-count">{serviceRequests.length} open</span>
+        </div>
+        {serviceRequestsError ? (
+          <p className="table-service-empty" role="alert">
+            {serviceRequestsError}
+          </p>
+        ) : serviceRequests.length === 0 ? (
+          <p className="table-service-empty">No open table requests.</p>
+        ) : (
+          <div className="table-service-request-list">
+            {serviceRequests.map((request) => {
+              const isBill = request.type === "BILL";
+              const RequestIcon = isBill ? ReceiptText : Droplets;
+              return (
+                <article className="table-service-request" key={request.id}>
+                  <span className={`table-service-icon ${isBill ? "bill" : "water"}`}>
+                    <RequestIcon size={18} />
+                  </span>
+                  <div>
+                    <strong>
+                      {isBill ? "Bring the bill" : "Water bottle requested"}
+                    </strong>
+                    <span>
+                      Table {request.tableNumber} ·{" "}
+                      {new Date(request.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <button
+                    className="secondary-button"
+                    onClick={() => onCompleteRequest(request.id)}
+                  >
+                    Mark done
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
       <div className="filter-bar">
         {["All", "New", "Preparing", "Ready", "Served", "Completed"].map(
           (item) => (
@@ -1237,6 +1385,7 @@ function OrdersView({
           <span>Table / waiter</span>
           <span>Items</span>
           <span>Amount</span>
+          <span>Payment</span>
           <span>Status</span>
         </div>
         {orders.map((order) => (
@@ -1257,6 +1406,11 @@ function OrdersView({
               {order.items.length} items<small>{order.items[0]}</small>
             </span>
             <strong>{money(order.amount)}</strong>
+            <span
+              className={`payment-pill ${order.paymentStatus === "paid" ? "paid" : "pending"}`}
+            >
+              {paymentLabel(order.paymentStatus)}
+            </span>
             <span className={`status-pill ${statusTone[order.status]}`}>
               {order.status}
             </span>
@@ -1701,47 +1855,91 @@ function ReportsView() {
   );
 }
 
-function SettingsView() {
+function SettingsView({
+  restaurantName,
+  restaurantCity,
+  tables,
+  onNavigate,
+}: {
+  restaurantName: string;
+  restaurantCity: string;
+  tables: Table[];
+  onNavigate: (view: View) => void;
+}) {
   return (
     <div className="page">
       <div className="page-heading">
         <div>
           <span className="eyebrow">SETTINGS</span>
           <h1>Make the system yours.</h1>
-          <p>Restaurant details and service preferences.</p>
+          <p>
+            Quick links to restaurant, menu, floor, staff, and account controls.
+          </p>
         </div>
       </div>
       <div className="settings-list">
-        {[
-          [
-            "Restaurant information",
-            "Anndham Family Dhaba · Jaipur, Rajasthan",
-            Store,
-          ],
-          ["Tables & floor", "12 tables · 52 total seats", Grid2X2],
-          ["Tax / GST", "5% restaurant GST enabled", CircleDollarSign],
-          ["Staff & roles", "8 active staff members", Users],
-          ["Notifications", "Sound alerts enabled for kitchen", Bell],
-        ].map(([title, detail, Icon]) => {
-          const ItemIcon = Icon as typeof Store;
-          return (
-            <button className="setting-row" key={title as string}>
-              <div className="setting-icon">
-                <ItemIcon size={18} />
-              </div>
-              <div>
-                <strong>{title as string}</strong>
-                <span>{detail as string}</span>
-              </div>
-              <ChevronDown size={17} />
-            </button>
-          );
-        })}
+        <a className="setting-row" href="/account">
+          <div className="setting-icon">
+            <Store size={18} />
+          </div>
+          <div>
+            <strong>Restaurant and account information</strong>
+            <span>
+              {restaurantName || "Restaurant"} · {restaurantCity || "Location"}
+            </span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
+        <button
+          className="setting-row"
+          onClick={() => onNavigate("Tables")}
+        >
+          <div className="setting-icon">
+            <Grid2X2 size={18} />
+          </div>
+          <div>
+            <strong>Tables and floor</strong>
+            <span>
+              {tables.length} {tables.length === 1 ? "table" : "tables"} set up
+            </span>
+          </div>
+          <ArrowRight size={17} />
+        </button>
+        <a className="setting-row" href="/manager/menu">
+          <div className="setting-icon">
+            <Utensils size={18} />
+          </div>
+          <div>
+            <strong>Menu and dishes</strong>
+            <span>Manage dishes shown on your QR menu</span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
+        <a className="setting-row" href="/manager/staff">
+          <div className="setting-icon">
+            <Users size={18} />
+          </div>
+          <div>
+            <strong>Staff and roles</strong>
+            <span>Manage restaurant staff accounts and invitations</span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
+        <a className="setting-row" href="/account">
+          <div className="setting-icon">
+            <UserRound size={18} />
+          </div>
+          <div>
+            <strong>Account security</strong>
+            <span>Update your profile or change your password</span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
       </div>
       <div className="rbac-panel">
         <div className="section-title">
           <h2>Role-based access</h2>
-          <button>Tenant RBAC</button>
+          <span>Access by role</span>
         </div>
         <div className="rbac-grid">
           {[
@@ -1864,10 +2062,12 @@ function TablePanel({
 
 function OrderPanel({
   order,
+  canComplete,
   onClose,
   onUpdate,
 }: {
   order: Order;
+  canComplete: boolean;
   onClose: () => void;
   onUpdate: (id: string, status: OrderStatus) => void;
 }) {
@@ -1895,6 +2095,31 @@ function OrderPanel({
             {order.table} · {order.waiter} · {order.time}
           </p>
         </div>
+        {(order.customerName || order.customerPhone || order.notes) && (
+          <div className="drawer-section">
+            <span className="eyebrow">GUEST DETAILS</span>
+            {order.customerName && (
+              <div className="drawer-order-line">
+                <span>Customer</span>
+                <strong>{order.customerName}</strong>
+              </div>
+            )}
+            {order.customerPhone && (
+              <div className="drawer-order-line">
+                <span>Mobile</span>
+                <a href={`tel:${order.customerPhone}`}>
+                  {order.customerPhone}
+                </a>
+              </div>
+            )}
+            {order.notes && (
+              <div className="drawer-order-line guest-instructions">
+                <span>Kitchen instructions</span>
+                <strong>{order.notes}</strong>
+              </div>
+            )}
+          </div>
+        )}
         <div className="drawer-section">
           <span className="eyebrow">ITEMS</span>
           {order.items.map((item) => (
@@ -1910,7 +2135,16 @@ function OrderPanel({
           </div>
           <div className="drawer-total">
             <span>Total</span>
-            <strong>{money(order.amount)}</strong>
+            <div className="drawer-payment-total">
+              <strong>{money(order.amount)}</strong>
+              <span
+                className={`payment-pill ${order.paymentStatus === "paid" ? "paid" : "pending"}`}
+              >
+                {order.paymentStatus === "paid"
+                  ? "Online payment confirmed by Razorpay"
+                  : paymentLabel(order.paymentStatus)}
+              </span>
+            </div>
           </div>
         </div>
         <div className="drawer-section">
@@ -1949,7 +2183,24 @@ function OrderPanel({
                 Mark served
               </button>
             )}
+            {order.status === "Served" && canComplete && (
+              <button
+                className="primary-button"
+                onClick={() => {
+                  onUpdate(order.id, "Completed");
+                  onClose();
+                }}
+              >
+                <PackageCheck size={15} /> Guest left · complete & free table
+              </button>
+            )}
           </div>
+          {order.status === "Served" && !canComplete && (
+            <p className="inline-note">
+              Ask a manager to confirm the guest has left and release this
+              table.
+            </p>
+          )}
         </div>
       </aside>
     </div>

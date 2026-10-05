@@ -12,6 +12,8 @@ type OrderScope = {
   source: "QR" | "WAITER" | "POS";
   tableId?: string | null;
   notes?: string;
+  customerName?: string;
+  customerPhone?: string;
   items: OrderInputLine[];
 };
 
@@ -22,7 +24,9 @@ async function fetchOrder(
   restaurantId: string,
 ) {
   const orderResult = await client.query(
-    `SELECT o.id, o.number, o.source, o.status, o.notes, o."totalAmount", o."createdAt",
+    `SELECT o.id, o.number, o.source, o.status, o."paymentStatus", o.notes,
+            o."totalAmount", o."createdAt",
+            o."customerName", o."customerPhone",
             t.number AS "tableNumber", u.name AS "waiterName"
        FROM "Order" o
        LEFT JOIN "RestaurantTable" t ON t.id = o."tableId" AND t."tenantId" = o."tenantId"
@@ -45,6 +49,7 @@ async function fetchOrder(
     amount: Number(order.totalAmount),
     source: String(order.source).toLowerCase(),
     status: String(order.status).toLowerCase(),
+    paymentStatus: String(order.paymentStatus).toLowerCase(),
     items: itemResult.rows.map((item) => ({
       menuItemId: item.menuItemId,
       name: item.itemName,
@@ -129,8 +134,8 @@ export async function createOrder(input: OrderScope) {
     );
     const number = Number(lastNumber.rows[0].number) + 1;
     const orderResult = await client.query(
-      `INSERT INTO "Order" (number, "tenantId", "restaurantId", "tableId", "userId", source, status, notes, "totalAmount", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, 'NEW', $7, $8, NOW())
+      `INSERT INTO "Order" (number, "tenantId", "restaurantId", "tableId", "userId", source, status, notes, "customerName", "customerPhone", "totalAmount", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, 'NEW', $7, $8, $9, $10, NOW())
        RETURNING id`,
       [
         number,
@@ -140,6 +145,8 @@ export async function createOrder(input: OrderScope) {
         input.userId,
         input.source,
         input.notes ?? "",
+        input.customerName ?? null,
+        input.customerPhone ?? null,
         (totalCents / 100).toFixed(2),
       ],
     );

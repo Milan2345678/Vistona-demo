@@ -86,6 +86,7 @@ export type Order = Prisma.OrderModel
  * 
  */
 export type OrderItem = Prisma.OrderItemModel
+export type TableServiceRequest = Prisma.TableServiceRequestModel
 /**
  * Model KotTicket
  * 

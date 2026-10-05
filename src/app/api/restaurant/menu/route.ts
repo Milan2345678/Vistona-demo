@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import type { PoolClient } from "pg";
 import { z } from "zod";
 import { inTransaction, pool } from "@/lib/database";
 import { findOrCreateMenuCategory } from "@/lib/menu-categories";
 import { isUniqueViolation } from "@/lib/account-security";
 import { requireSession } from "@/lib/tenant";
+import { MAX_MENU_IMPORT_ITEMS } from "@/lib/menu-csv";
 
 const menuItemSchema = z
   .object({
@@ -16,6 +18,45 @@ const menuItemSchema = z
     imageUrl: z.string().trim().url().max(2048).nullable().optional(),
   })
   .strict();
+const bulkMenuSchema = z
+  .object({
+    items: z.array(menuItemSchema).min(1).max(MAX_MENU_IMPORT_ITEMS),
+  })
+  .strict();
+
+type MenuDish = z.infer<typeof menuItemSchema>;
+
+async function insertMenuItem(
+  client: PoolClient,
+  tenantId: string,
+  restaurantId: string,
+  dish: MenuDish,
+) {
+  const categoryId = await findOrCreateMenuCategory(
+    client,
+    tenantId,
+    restaurantId,
+    dish.category,
+  );
+  const result = await client.query(
+    `INSERT INTO "MenuItem" ("tenantId", "restaurantId", "categoryId", name,
+       description, price, vegetarian, available, active, "imageUrl")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, $9)
+     RETURNING id, name, description, price, vegetarian, available, active, "imageUrl", "categoryId"`,
+    [
+      tenantId,
+      restaurantId,
+      categoryId,
+      dish.name,
+      dish.description,
+      dish.price,
+      dish.vegetarian,
+      dish.available,
+      dish.imageUrl || null,
+    ],
+  );
+  return { ...result.rows[0], category: dish.category };
+}
 
 export async function GET() {
   const auth = await requireSession(["manager", "waiter"]);
@@ -60,9 +101,67 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await requireSession(["manager"]);
   if (!auth.session) return auth.response;
-  const parsed = menuItemSchema.safeParse(
-    await request.json().catch(() => null),
-  );
+
+  const body = await request.json().catch(() => null);
+  if (
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    "items" in body
+  ) {
+    const parsed = bulkMenuSchema.safeParse(body);
+    if (!parsed.success) {
+      const row = parsed.error.issues.find(
+        (issue) => typeof issue.path[1] === "number",
+      )?.path[1];
+      return NextResponse.json(
+        {
+          error:
+            typeof row === "number"
+              ? `Invalid dish details in CSV row ${row + 2}`
+              : `Import between 1 and ${MAX_MENU_IMPORT_ITEMS} valid dishes`,
+        },
+        { status: 400 },
+      );
+    }
+
+    try {
+      const items = await inTransaction(async (client) => {
+        const created: Awaited<ReturnType<typeof insertMenuItem>>[] = [];
+        for (const dish of parsed.data.items) {
+          created.push(
+            await insertMenuItem(
+              client,
+              auth.session!.tenantId,
+              auth.session!.restaurantId,
+              dish,
+            ),
+          );
+        }
+        return created;
+      });
+      return NextResponse.json(
+        { items: items.map((item) => ({ ...item, price: Number(item.price) })) },
+        { status: 201 },
+      );
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        return NextResponse.json(
+          {
+            error:
+              "A dish name already exists in this restaurant; no dishes were imported",
+          },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(
+        { error: "Dishes could not be imported" },
+        { status: 503 },
+      );
+    }
+  }
+
+  const parsed = menuItemSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Enter a valid dish name, category, and positive price" },
@@ -72,37 +171,18 @@ export async function POST(request: Request) {
 
   try {
     const item = await inTransaction(async (client) => {
-      const categoryId = await findOrCreateMenuCategory(
+      return insertMenuItem(
         client,
         auth.session!.tenantId,
         auth.session!.restaurantId,
-        parsed.data.category,
+        parsed.data,
       );
-      const result = await client.query(
-        `INSERT INTO "MenuItem" ("tenantId", "restaurantId", "categoryId", name,
-           description, price, vegetarian, available, active, "imageUrl")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, $9)
-         RETURNING id, name, description, price, vegetarian, available, active, "imageUrl", "categoryId"`,
-        [
-          auth.session!.tenantId,
-          auth.session!.restaurantId,
-          categoryId,
-          parsed.data.name,
-          parsed.data.description,
-          parsed.data.price,
-          parsed.data.vegetarian,
-          parsed.data.available,
-          parsed.data.imageUrl || null,
-        ],
-      );
-      return result.rows[0];
     });
     return NextResponse.json(
       {
         item: {
           ...item,
           price: Number(item.price),
-          category: parsed.data.category,
         },
       },
       { status: 201 },

@@ -60,6 +60,7 @@ export const ModelName = {
   MenuItem: 'MenuItem',
   Order: 'Order',
   OrderItem: 'OrderItem',
+  TableServiceRequest: 'TableServiceRequest',
   KotTicket: 'KotTicket',
   KotEvent: 'KotEvent',
   Payment: 'Payment'
@@ -188,6 +189,8 @@ export const OrderScalarFieldEnum = {
   source: 'source',
   status: 'status',
   notes: 'notes',
+  customerName: 'customerName',
+  customerPhone: 'customerPhone',
   totalAmount: 'totalAmount',
   paymentStatus: 'paymentStatus',
   createdAt: 'createdAt',
@@ -209,6 +212,20 @@ export const OrderItemScalarFieldEnum = {
 } as const
 
 export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const TableServiceRequestScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  restaurantId: 'restaurantId',
+  tableId: 'tableId',
+  type: 'type',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TableServiceRequestScalarFieldEnum = (typeof TableServiceRequestScalarFieldEnum)[keyof typeof TableServiceRequestScalarFieldEnum]
 
 
 export const KotTicketScalarFieldEnum = {

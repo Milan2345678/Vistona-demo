@@ -242,6 +242,7 @@ export type RestaurantTableWhereInput = {
   publicQrToken?: Prisma.StringFilter<"RestaurantTable"> | string
   restaurant?: Prisma.XOR<Prisma.RestaurantScalarRelationFilter, Prisma.RestaurantWhereInput>
   orders?: Prisma.OrderListRelationFilter
+  serviceRequests?: Prisma.TableServiceRequestListRelationFilter
 }
 
 export type RestaurantTableOrderByWithRelationInput = {
@@ -255,6 +256,7 @@ export type RestaurantTableOrderByWithRelationInput = {
   publicQrToken?: Prisma.SortOrder
   restaurant?: Prisma.RestaurantOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
+  serviceRequests?: Prisma.TableServiceRequestOrderByRelationAggregateInput
 }
 
 export type RestaurantTableWhereUniqueInput = Prisma.AtLeast<{
@@ -273,6 +275,7 @@ export type RestaurantTableWhereUniqueInput = Prisma.AtLeast<{
   active?: Prisma.BoolFilter<"RestaurantTable"> | boolean
   restaurant?: Prisma.XOR<Prisma.RestaurantScalarRelationFilter, Prisma.RestaurantWhereInput>
   orders?: Prisma.OrderListRelationFilter
+  serviceRequests?: Prisma.TableServiceRequestListRelationFilter
 }, "id" | "publicQrToken" | "id_restaurantId_tenantId" | "restaurantId_tenantId_number">
 
 export type RestaurantTableOrderByWithAggregationInput = {
@@ -314,6 +317,7 @@ export type RestaurantTableCreateInput = {
   publicQrToken?: string
   restaurant: Prisma.RestaurantCreateNestedOneWithoutTablesInput
   orders?: Prisma.OrderCreateNestedManyWithoutTableInput
+  serviceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutTableInput
 }
 
 export type RestaurantTableUncheckedCreateInput = {
@@ -326,6 +330,7 @@ export type RestaurantTableUncheckedCreateInput = {
   active?: boolean
   publicQrToken?: string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTableInput
+  serviceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutTableInput
 }
 
 export type RestaurantTableUpdateInput = {
@@ -337,6 +342,7 @@ export type RestaurantTableUpdateInput = {
   publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutTablesNestedInput
   orders?: Prisma.OrderUpdateManyWithoutTableNestedInput
+  serviceRequests?: Prisma.TableServiceRequestUpdateManyWithoutTableNestedInput
 }
 
 export type RestaurantTableUncheckedUpdateInput = {
@@ -349,6 +355,7 @@ export type RestaurantTableUncheckedUpdateInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutTableNestedInput
+  serviceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutTableNestedInput
 }
 
 export type RestaurantTableCreateManyInput = {
@@ -450,6 +457,11 @@ export type RestaurantTableNullableScalarRelationFilter = {
   isNot?: Prisma.RestaurantTableWhereInput | null
 }
 
+export type RestaurantTableScalarRelationFilter = {
+  is?: Prisma.RestaurantTableWhereInput
+  isNot?: Prisma.RestaurantTableWhereInput
+}
+
 export type RestaurantTableCreateNestedManyWithoutRestaurantInput = {
   create?: Prisma.XOR<Prisma.RestaurantTableCreateWithoutRestaurantInput, Prisma.RestaurantTableUncheckedCreateWithoutRestaurantInput> | Prisma.RestaurantTableCreateWithoutRestaurantInput[] | Prisma.RestaurantTableUncheckedCreateWithoutRestaurantInput[]
   connectOrCreate?: Prisma.RestaurantTableCreateOrConnectWithoutRestaurantInput | Prisma.RestaurantTableCreateOrConnectWithoutRestaurantInput[]
@@ -512,6 +524,20 @@ export type RestaurantTableUpdateOneWithoutOrdersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.RestaurantTableUpdateToOneWithWhereWithoutOrdersInput, Prisma.RestaurantTableUpdateWithoutOrdersInput>, Prisma.RestaurantTableUncheckedUpdateWithoutOrdersInput>
 }
 
+export type RestaurantTableCreateNestedOneWithoutServiceRequestsInput = {
+  create?: Prisma.XOR<Prisma.RestaurantTableCreateWithoutServiceRequestsInput, Prisma.RestaurantTableUncheckedCreateWithoutServiceRequestsInput>
+  connectOrCreate?: Prisma.RestaurantTableCreateOrConnectWithoutServiceRequestsInput
+  connect?: Prisma.RestaurantTableWhereUniqueInput
+}
+
+export type RestaurantTableUpdateOneRequiredWithoutServiceRequestsNestedInput = {
+  create?: Prisma.XOR<Prisma.RestaurantTableCreateWithoutServiceRequestsInput, Prisma.RestaurantTableUncheckedCreateWithoutServiceRequestsInput>
+  connectOrCreate?: Prisma.RestaurantTableCreateOrConnectWithoutServiceRequestsInput
+  upsert?: Prisma.RestaurantTableUpsertWithoutServiceRequestsInput
+  connect?: Prisma.RestaurantTableWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RestaurantTableUpdateToOneWithWhereWithoutServiceRequestsInput, Prisma.RestaurantTableUpdateWithoutServiceRequestsInput>, Prisma.RestaurantTableUncheckedUpdateWithoutServiceRequestsInput>
+}
+
 export type RestaurantTableCreateWithoutRestaurantInput = {
   id?: string
   number: string
@@ -520,6 +546,7 @@ export type RestaurantTableCreateWithoutRestaurantInput = {
   active?: boolean
   publicQrToken?: string
   orders?: Prisma.OrderCreateNestedManyWithoutTableInput
+  serviceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutTableInput
 }
 
 export type RestaurantTableUncheckedCreateWithoutRestaurantInput = {
@@ -530,6 +557,7 @@ export type RestaurantTableUncheckedCreateWithoutRestaurantInput = {
   active?: boolean
   publicQrToken?: string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTableInput
+  serviceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutTableInput
 }
 
 export type RestaurantTableCreateOrConnectWithoutRestaurantInput = {
@@ -580,6 +608,7 @@ export type RestaurantTableCreateWithoutOrdersInput = {
   active?: boolean
   publicQrToken?: string
   restaurant: Prisma.RestaurantCreateNestedOneWithoutTablesInput
+  serviceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutTableInput
 }
 
 export type RestaurantTableUncheckedCreateWithoutOrdersInput = {
@@ -591,6 +620,7 @@ export type RestaurantTableUncheckedCreateWithoutOrdersInput = {
   status?: $Enums.TableStatus
   active?: boolean
   publicQrToken?: string
+  serviceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutTableInput
 }
 
 export type RestaurantTableCreateOrConnectWithoutOrdersInput = {
@@ -617,6 +647,7 @@ export type RestaurantTableUpdateWithoutOrdersInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutTablesNestedInput
+  serviceRequests?: Prisma.TableServiceRequestUpdateManyWithoutTableNestedInput
 }
 
 export type RestaurantTableUncheckedUpdateWithoutOrdersInput = {
@@ -628,6 +659,69 @@ export type RestaurantTableUncheckedUpdateWithoutOrdersInput = {
   status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutTableNestedInput
+}
+
+export type RestaurantTableCreateWithoutServiceRequestsInput = {
+  id?: string
+  number: string
+  seats: number
+  status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
+  restaurant: Prisma.RestaurantCreateNestedOneWithoutTablesInput
+  orders?: Prisma.OrderCreateNestedManyWithoutTableInput
+}
+
+export type RestaurantTableUncheckedCreateWithoutServiceRequestsInput = {
+  id?: string
+  tenantId: string
+  restaurantId: string
+  number: string
+  seats: number
+  status?: $Enums.TableStatus
+  active?: boolean
+  publicQrToken?: string
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTableInput
+}
+
+export type RestaurantTableCreateOrConnectWithoutServiceRequestsInput = {
+  where: Prisma.RestaurantTableWhereUniqueInput
+  create: Prisma.XOR<Prisma.RestaurantTableCreateWithoutServiceRequestsInput, Prisma.RestaurantTableUncheckedCreateWithoutServiceRequestsInput>
+}
+
+export type RestaurantTableUpsertWithoutServiceRequestsInput = {
+  update: Prisma.XOR<Prisma.RestaurantTableUpdateWithoutServiceRequestsInput, Prisma.RestaurantTableUncheckedUpdateWithoutServiceRequestsInput>
+  create: Prisma.XOR<Prisma.RestaurantTableCreateWithoutServiceRequestsInput, Prisma.RestaurantTableUncheckedCreateWithoutServiceRequestsInput>
+  where?: Prisma.RestaurantTableWhereInput
+}
+
+export type RestaurantTableUpdateToOneWithWhereWithoutServiceRequestsInput = {
+  where?: Prisma.RestaurantTableWhereInput
+  data: Prisma.XOR<Prisma.RestaurantTableUpdateWithoutServiceRequestsInput, Prisma.RestaurantTableUncheckedUpdateWithoutServiceRequestsInput>
+}
+
+export type RestaurantTableUpdateWithoutServiceRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.StringFieldUpdateOperationsInput | string
+  seats?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
+  restaurant?: Prisma.RestaurantUpdateOneRequiredWithoutTablesNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutTableNestedInput
+}
+
+export type RestaurantTableUncheckedUpdateWithoutServiceRequestsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  restaurantId?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.StringFieldUpdateOperationsInput | string
+  seats?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumTableStatusFieldUpdateOperationsInput | $Enums.TableStatus
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutTableNestedInput
 }
 
 export type RestaurantTableCreateManyRestaurantInput = {
@@ -647,6 +741,7 @@ export type RestaurantTableUpdateWithoutRestaurantInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUpdateManyWithoutTableNestedInput
+  serviceRequests?: Prisma.TableServiceRequestUpdateManyWithoutTableNestedInput
 }
 
 export type RestaurantTableUncheckedUpdateWithoutRestaurantInput = {
@@ -657,6 +752,7 @@ export type RestaurantTableUncheckedUpdateWithoutRestaurantInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publicQrToken?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutTableNestedInput
+  serviceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutTableNestedInput
 }
 
 export type RestaurantTableUncheckedUpdateManyWithoutRestaurantInput = {
@@ -675,10 +771,12 @@ export type RestaurantTableUncheckedUpdateManyWithoutRestaurantInput = {
 
 export type RestaurantTableCountOutputType = {
   orders: number
+  serviceRequests: number
 }
 
 export type RestaurantTableCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orders?: boolean | RestaurantTableCountOutputTypeCountOrdersArgs
+  serviceRequests?: boolean | RestaurantTableCountOutputTypeCountServiceRequestsArgs
 }
 
 /**
@@ -698,6 +796,13 @@ export type RestaurantTableCountOutputTypeCountOrdersArgs<ExtArgs extends runtim
   where?: Prisma.OrderWhereInput
 }
 
+/**
+ * RestaurantTableCountOutputType without action
+ */
+export type RestaurantTableCountOutputTypeCountServiceRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TableServiceRequestWhereInput
+}
+
 
 export type RestaurantTableSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -710,6 +815,7 @@ export type RestaurantTableSelect<ExtArgs extends runtime.Types.Extensions.Inter
   publicQrToken?: boolean
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   orders?: boolean | Prisma.RestaurantTable$ordersArgs<ExtArgs>
+  serviceRequests?: boolean | Prisma.RestaurantTable$serviceRequestsArgs<ExtArgs>
   _count?: boolean | Prisma.RestaurantTableCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["restaurantTable"]>
 
@@ -752,6 +858,7 @@ export type RestaurantTableOmit<ExtArgs extends runtime.Types.Extensions.Interna
 export type RestaurantTableInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   restaurant?: boolean | Prisma.RestaurantDefaultArgs<ExtArgs>
   orders?: boolean | Prisma.RestaurantTable$ordersArgs<ExtArgs>
+  serviceRequests?: boolean | Prisma.RestaurantTable$serviceRequestsArgs<ExtArgs>
   _count?: boolean | Prisma.RestaurantTableCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type RestaurantTableIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -766,6 +873,7 @@ export type $RestaurantTablePayload<ExtArgs extends runtime.Types.Extensions.Int
   objects: {
     restaurant: Prisma.$RestaurantPayload<ExtArgs>
     orders: Prisma.$OrderPayload<ExtArgs>[]
+    serviceRequests: Prisma.$TableServiceRequestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1172,6 +1280,7 @@ export interface Prisma__RestaurantTableClient<T, Null = never, ExtArgs extends 
   readonly [Symbol.toStringTag]: "PrismaPromise"
   restaurant<T extends Prisma.RestaurantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RestaurantDefaultArgs<ExtArgs>>): Prisma.Prisma__RestaurantClient<runtime.Types.Result.GetResult<Prisma.$RestaurantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   orders<T extends Prisma.RestaurantTable$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RestaurantTable$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  serviceRequests<T extends Prisma.RestaurantTable$serviceRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RestaurantTable$serviceRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TableServiceRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1631,6 +1740,30 @@ export type RestaurantTable$ordersArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.OrderScalarFieldEnum | Prisma.OrderScalarFieldEnum[]
+}
+
+/**
+ * RestaurantTable.serviceRequests
+ */
+export type RestaurantTable$serviceRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TableServiceRequest
+   */
+  select?: Prisma.TableServiceRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TableServiceRequest
+   */
+  omit?: Prisma.TableServiceRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TableServiceRequestInclude<ExtArgs> | null
+  where?: Prisma.TableServiceRequestWhereInput
+  orderBy?: Prisma.TableServiceRequestOrderByWithRelationInput | Prisma.TableServiceRequestOrderByWithRelationInput[]
+  cursor?: Prisma.TableServiceRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TableServiceRequestScalarFieldEnum | Prisma.TableServiceRequestScalarFieldEnum[]
 }
 
 /**

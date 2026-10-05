@@ -406,6 +406,7 @@ export const ModelName = {
   MenuItem: 'MenuItem',
   Order: 'Order',
   OrderItem: 'OrderItem',
+  TableServiceRequest: 'TableServiceRequest',
   KotTicket: 'KotTicket',
   KotEvent: 'KotEvent',
   Payment: 'Payment'
@@ -424,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "restaurant" | "user" | "staffInvite" | "restaurantTable" | "menuCategory" | "menuItem" | "order" | "orderItem" | "kotTicket" | "kotEvent" | "payment"
+    modelProps: "tenant" | "restaurant" | "user" | "staffInvite" | "restaurantTable" | "menuCategory" | "menuItem" | "order" | "orderItem" | "tableServiceRequest" | "kotTicket" | "kotEvent" | "payment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1094,6 +1095,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TableServiceRequest: {
+      payload: Prisma.$TableServiceRequestPayload<ExtArgs>
+      fields: Prisma.TableServiceRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TableServiceRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TableServiceRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.TableServiceRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TableServiceRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>
+        }
+        findMany: {
+          args: Prisma.TableServiceRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>[]
+        }
+        create: {
+          args: Prisma.TableServiceRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>
+        }
+        createMany: {
+          args: Prisma.TableServiceRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TableServiceRequestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>[]
+        }
+        delete: {
+          args: Prisma.TableServiceRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>
+        }
+        update: {
+          args: Prisma.TableServiceRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.TableServiceRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TableServiceRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TableServiceRequestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>[]
+        }
+        upsert: {
+          args: Prisma.TableServiceRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableServiceRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.TableServiceRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTableServiceRequest>
+        }
+        groupBy: {
+          args: Prisma.TableServiceRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TableServiceRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TableServiceRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TableServiceRequestCountAggregateOutputType> | number
+        }
+      }
+    }
     KotTicket: {
       payload: Prisma.$KotTicketPayload<ExtArgs>
       fields: Prisma.KotTicketFieldRefs
@@ -1462,6 +1537,8 @@ export const OrderScalarFieldEnum = {
   source: 'source',
   status: 'status',
   notes: 'notes',
+  customerName: 'customerName',
+  customerPhone: 'customerPhone',
   totalAmount: 'totalAmount',
   paymentStatus: 'paymentStatus',
   createdAt: 'createdAt',
@@ -1483,6 +1560,20 @@ export const OrderItemScalarFieldEnum = {
 } as const
 
 export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const TableServiceRequestScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  restaurantId: 'restaurantId',
+  tableId: 'tableId',
+  type: 'type',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TableServiceRequestScalarFieldEnum = (typeof TableServiceRequestScalarFieldEnum)[keyof typeof TableServiceRequestScalarFieldEnum]
 
 
 export const KotTicketScalarFieldEnum = {
@@ -1864,6 +1955,7 @@ export type GlobalOmitConfig = {
   menuItem?: Prisma.MenuItemOmit
   order?: Prisma.OrderOmit
   orderItem?: Prisma.OrderItemOmit
+  tableServiceRequest?: Prisma.TableServiceRequestOmit
   kotTicket?: Prisma.KotTicketOmit
   kotEvent?: Prisma.KotEventOmit
   payment?: Prisma.PaymentOmit
