@@ -6,7 +6,17 @@ import { createOrder, OrderValidationError } from "@/lib/orders";
 const qrOrderSchema = z
   .object({
     tableToken: z.string().trim().min(32).max(64),
-    notes: z.string().trim().max(500).optional(),
+    customerName: z.string().trim().min(2).max(80),
+    customerPhone: z
+      .string()
+      .trim()
+      .regex(/^\+?[1-9]\d{7,14}$/, "Enter a valid mobile number"),
+    specialInstructions: z.string().trim().max(400).optional().default(""),
+    preferences: z
+      .array(z.enum(["Less spicy", "No onion", "Pack separately"]))
+      .max(3)
+      .optional()
+      .default([]),
     items: z
       .array(
         z.object({
@@ -34,6 +44,13 @@ export async function POST(
   const { restaurantSlug } = await context.params;
 
   try {
+    const notes = [
+      ...parsed.data.preferences,
+      parsed.data.specialInstructions,
+    ]
+      .filter(Boolean)
+      .join(". ")
+      .slice(0, 500);
     const restaurantResult = await pool.query(
       `SELECT r.id, r."tenantId" FROM "Restaurant" r WHERE r.slug = $1 LIMIT 1`,
       [restaurantSlug],
@@ -63,7 +80,9 @@ export async function POST(
       userId: null,
       source: "QR",
       tableId: tableResult.rows[0].id,
-      notes: parsed.data.notes,
+      notes,
+      customerName: parsed.data.customerName,
+      customerPhone: parsed.data.customerPhone,
       items: parsed.data.items,
     });
     return NextResponse.json({ order }, { status: 201 });

@@ -38,6 +38,7 @@ export type PaymentMinAggregateOutputType = {
   id: string | null
   orderId: string | null
   provider: string | null
+  method: string | null
   providerOrderId: string | null
   providerPaymentId: string | null
   amountPaise: number | null
@@ -51,6 +52,7 @@ export type PaymentMaxAggregateOutputType = {
   id: string | null
   orderId: string | null
   provider: string | null
+  method: string | null
   providerOrderId: string | null
   providerPaymentId: string | null
   amountPaise: number | null
@@ -64,6 +66,7 @@ export type PaymentCountAggregateOutputType = {
   id: number
   orderId: number
   provider: number
+  method: number
   providerOrderId: number
   providerPaymentId: number
   amountPaise: number
@@ -87,6 +90,7 @@ export type PaymentMinAggregateInputType = {
   id?: true
   orderId?: true
   provider?: true
+  method?: true
   providerOrderId?: true
   providerPaymentId?: true
   amountPaise?: true
@@ -100,6 +104,7 @@ export type PaymentMaxAggregateInputType = {
   id?: true
   orderId?: true
   provider?: true
+  method?: true
   providerOrderId?: true
   providerPaymentId?: true
   amountPaise?: true
@@ -113,6 +118,7 @@ export type PaymentCountAggregateInputType = {
   id?: true
   orderId?: true
   provider?: true
+  method?: true
   providerOrderId?: true
   providerPaymentId?: true
   amountPaise?: true
@@ -213,6 +219,7 @@ export type PaymentGroupByOutputType = {
   id: string
   orderId: string
   provider: string
+  method: string
   providerOrderId: string
   providerPaymentId: string | null
   amountPaise: number
@@ -249,6 +256,7 @@ export type PaymentWhereInput = {
   id?: Prisma.StringFilter<"Payment"> | string
   orderId?: Prisma.StringFilter<"Payment"> | string
   provider?: Prisma.StringFilter<"Payment"> | string
+  method?: Prisma.StringFilter<"Payment"> | string
   providerOrderId?: Prisma.StringFilter<"Payment"> | string
   providerPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
   amountPaise?: Prisma.IntFilter<"Payment"> | number
@@ -263,6 +271,7 @@ export type PaymentOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  method?: Prisma.SortOrder
   providerOrderId?: Prisma.SortOrder
   providerPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   amountPaise?: Prisma.SortOrder
@@ -282,6 +291,7 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.PaymentWhereInput | Prisma.PaymentWhereInput[]
   orderId?: Prisma.StringFilter<"Payment"> | string
   provider?: Prisma.StringFilter<"Payment"> | string
+  method?: Prisma.StringFilter<"Payment"> | string
   amountPaise?: Prisma.IntFilter<"Payment"> | number
   currency?: Prisma.StringFilter<"Payment"> | string
   status?: Prisma.EnumPayStatusFilter<"Payment"> | $Enums.PayStatus
@@ -294,6 +304,7 @@ export type PaymentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  method?: Prisma.SortOrder
   providerOrderId?: Prisma.SortOrder
   providerPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   amountPaise?: Prisma.SortOrder
@@ -315,6 +326,7 @@ export type PaymentScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   orderId?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   provider?: Prisma.StringWithAggregatesFilter<"Payment"> | string
+  method?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   providerOrderId?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   providerPaymentId?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
   amountPaise?: Prisma.IntWithAggregatesFilter<"Payment"> | number
@@ -327,6 +339,7 @@ export type PaymentScalarWhereWithAggregatesInput = {
 export type PaymentCreateInput = {
   id?: string
   provider?: string
+  method?: string
   providerOrderId: string
   providerPaymentId?: string | null
   amountPaise: number
@@ -341,6 +354,7 @@ export type PaymentUncheckedCreateInput = {
   id?: string
   orderId: string
   provider?: string
+  method?: string
   providerOrderId: string
   providerPaymentId?: string | null
   amountPaise: number
@@ -353,6 +367,7 @@ export type PaymentUncheckedCreateInput = {
 export type PaymentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   provider?: Prisma.StringFieldUpdateOperationsInput | string
+  method?: Prisma.StringFieldUpdateOperationsInput | string
   providerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   providerPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountPaise?: Prisma.IntFieldUpdateOperationsInput | number
@@ -367,6 +382,7 @@ export type PaymentUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   provider?: Prisma.StringFieldUpdateOperationsInput | string
+  method?: Prisma.StringFieldUpdateOperationsInput | string
   providerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   providerPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountPaise?: Prisma.IntFieldUpdateOperationsInput | number
@@ -380,6 +396,7 @@ export type PaymentCreateManyInput = {
   id?: string
   orderId: string
   provider?: string
+  method?: string
   providerOrderId: string
   providerPaymentId?: string | null
   amountPaise: number
@@ -392,6 +409,7 @@ export type PaymentCreateManyInput = {
 export type PaymentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   provider?: Prisma.StringFieldUpdateOperationsInput | string
+  method?: Prisma.StringFieldUpdateOperationsInput | string
   providerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   providerPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountPaise?: Prisma.IntFieldUpdateOperationsInput | number
@@ -405,6 +423,7 @@ export type PaymentUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   provider?: Prisma.StringFieldUpdateOperationsInput | string
+  method?: Prisma.StringFieldUpdateOperationsInput | string
   providerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   providerPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountPaise?: Prisma.IntFieldUpdateOperationsInput | number
@@ -428,6 +447,7 @@ export type PaymentCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  method?: Prisma.SortOrder
   providerOrderId?: Prisma.SortOrder
   providerPaymentId?: Prisma.SortOrder
   amountPaise?: Prisma.SortOrder
@@ -445,6 +465,7 @@ export type PaymentMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  method?: Prisma.SortOrder
   providerOrderId?: Prisma.SortOrder
   providerPaymentId?: Prisma.SortOrder
   amountPaise?: Prisma.SortOrder
@@ -458,6 +479,7 @@ export type PaymentMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  method?: Prisma.SortOrder
   providerOrderId?: Prisma.SortOrder
   providerPaymentId?: Prisma.SortOrder
   amountPaise?: Prisma.SortOrder
@@ -516,6 +538,7 @@ export type PaymentUncheckedUpdateManyWithoutOrderNestedInput = {
 export type PaymentCreateWithoutOrderInput = {
   id?: string
   provider?: string
+  method?: string
   providerOrderId: string
   providerPaymentId?: string | null
   amountPaise: number
@@ -528,6 +551,7 @@ export type PaymentCreateWithoutOrderInput = {
 export type PaymentUncheckedCreateWithoutOrderInput = {
   id?: string
   provider?: string
+  method?: string
   providerOrderId: string
   providerPaymentId?: string | null
   amountPaise: number
@@ -570,6 +594,7 @@ export type PaymentScalarWhereInput = {
   id?: Prisma.StringFilter<"Payment"> | string
   orderId?: Prisma.StringFilter<"Payment"> | string
   provider?: Prisma.StringFilter<"Payment"> | string
+  method?: Prisma.StringFilter<"Payment"> | string
   providerOrderId?: Prisma.StringFilter<"Payment"> | string
   providerPaymentId?: Prisma.StringNullableFilter<"Payment"> | string | null
   amountPaise?: Prisma.IntFilter<"Payment"> | number
@@ -582,6 +607,7 @@ export type PaymentScalarWhereInput = {
 export type PaymentCreateManyOrderInput = {
   id?: string
   provider?: string
+  method?: string
   providerOrderId: string
   providerPaymentId?: string | null
   amountPaise: number
@@ -594,6 +620,7 @@ export type PaymentCreateManyOrderInput = {
 export type PaymentUpdateWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   provider?: Prisma.StringFieldUpdateOperationsInput | string
+  method?: Prisma.StringFieldUpdateOperationsInput | string
   providerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   providerPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountPaise?: Prisma.IntFieldUpdateOperationsInput | number
@@ -606,6 +633,7 @@ export type PaymentUpdateWithoutOrderInput = {
 export type PaymentUncheckedUpdateWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   provider?: Prisma.StringFieldUpdateOperationsInput | string
+  method?: Prisma.StringFieldUpdateOperationsInput | string
   providerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   providerPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountPaise?: Prisma.IntFieldUpdateOperationsInput | number
@@ -618,6 +646,7 @@ export type PaymentUncheckedUpdateWithoutOrderInput = {
 export type PaymentUncheckedUpdateManyWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   provider?: Prisma.StringFieldUpdateOperationsInput | string
+  method?: Prisma.StringFieldUpdateOperationsInput | string
   providerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   providerPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountPaise?: Prisma.IntFieldUpdateOperationsInput | number
@@ -633,6 +662,7 @@ export type PaymentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   id?: boolean
   orderId?: boolean
   provider?: boolean
+  method?: boolean
   providerOrderId?: boolean
   providerPaymentId?: boolean
   amountPaise?: boolean
@@ -647,6 +677,7 @@ export type PaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   orderId?: boolean
   provider?: boolean
+  method?: boolean
   providerOrderId?: boolean
   providerPaymentId?: boolean
   amountPaise?: boolean
@@ -661,6 +692,7 @@ export type PaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   orderId?: boolean
   provider?: boolean
+  method?: boolean
   providerOrderId?: boolean
   providerPaymentId?: boolean
   amountPaise?: boolean
@@ -675,6 +707,7 @@ export type PaymentSelectScalar = {
   id?: boolean
   orderId?: boolean
   provider?: boolean
+  method?: boolean
   providerOrderId?: boolean
   providerPaymentId?: boolean
   amountPaise?: boolean
@@ -684,7 +717,7 @@ export type PaymentSelectScalar = {
   updatedAt?: boolean
 }
 
-export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "provider" | "providerOrderId" | "providerPaymentId" | "amountPaise" | "currency" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
+export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "provider" | "method" | "providerOrderId" | "providerPaymentId" | "amountPaise" | "currency" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["payment"]>
 export type PaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
 }
@@ -704,6 +737,7 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: string
     orderId: string
     provider: string
+    method: string
     providerOrderId: string
     providerPaymentId: string | null
     amountPaise: number
@@ -1138,6 +1172,7 @@ export interface PaymentFieldRefs {
   readonly id: Prisma.FieldRef<"Payment", 'String'>
   readonly orderId: Prisma.FieldRef<"Payment", 'String'>
   readonly provider: Prisma.FieldRef<"Payment", 'String'>
+  readonly method: Prisma.FieldRef<"Payment", 'String'>
   readonly providerOrderId: Prisma.FieldRef<"Payment", 'String'>
   readonly providerPaymentId: Prisma.FieldRef<"Payment", 'String'>
   readonly amountPaise: Prisma.FieldRef<"Payment", 'Int'>

@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import QRCode from "qrcode";
-import { Download, Plus, QrCode, X } from "lucide-react";
+import { Download, Plus, Printer, QrCode, X } from "lucide-react";
 import Image from "next/image";
 
 type TableStatus = "AVAILABLE" | "OCCUPIED" | "BILLING";
@@ -68,6 +68,7 @@ export default function TableManagement({
   error,
   onSelect,
   onStartOrder,
+  onStartWalkIn,
   onTableChanged,
 }: {
   tables: TableRow[];
@@ -77,6 +78,7 @@ export default function TableManagement({
   error: string;
   onSelect: (table: TableRow) => void;
   onStartOrder: () => void;
+  onStartWalkIn: () => void;
   onTableChanged: (table: TableRow) => void;
 }) {
   const [filter, setFilter] = useState("All");
@@ -240,6 +242,70 @@ export default function TableManagement({
     }
   }
 
+  async function printQrSheet() {
+    const printableTables = tables.filter(
+      (table) => table.active !== false && table.publicQrToken,
+    );
+    if (!printableTables.length) {
+      setActionError("No active table QR codes are available to print.");
+      return;
+    }
+    const popup = window.open("", "_blank");
+    if (!popup) {
+      setActionError("Allow pop-ups to print the QR sheet.");
+      return;
+    }
+    popup.opener = null;
+    try {
+      const escapeHtml = (value: string) =>
+        value.replace(/[&<>"']/g, (character) => {
+          const entities: Record<string, string> = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          };
+          return entities[character];
+        });
+      const entries = await Promise.all(
+        printableTables.map(async (table) => ({
+          table: table.id,
+          image: await QRCode.toDataURL(qrUrl(table), {
+            width: 420,
+            margin: 2,
+          }),
+        })),
+      );
+      popup.document.write(`<!doctype html>
+        <html><head><title>${escapeHtml(restaurantSlug)} table QR codes</title>
+        <style>
+          body{font:16px Arial,sans-serif;margin:24px;color:#17231f}
+          h1{font-size:24px;margin:0 0 20px}
+          .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+          article{border:1px solid #cbd5d1;border-radius:12px;padding:14px;text-align:center;break-inside:avoid}
+          h2{font-size:18px;margin:0 0 8px}
+          img{width:100%;max-width:190px;height:auto}
+          p{font-size:12px;overflow-wrap:anywhere;margin:6px 0 0}
+          @media print{body{margin:12mm}.grid{gap:10px}article{padding:8px}}
+        </style></head><body>
+        <h1>${escapeHtml(restaurantSlug)} · Table QR codes</h1>
+        <div class="grid">${entries
+          .map(
+            (entry) =>
+              `<article><h2>Table ${escapeHtml(entry.table)}</h2><img src="${entry.image}" alt="QR for Table ${escapeHtml(entry.table)}"><p>Scan to view the menu and order</p></article>`,
+          )
+          .join("")}</div>
+        <script>window.onload=()=>window.print()</script></body></html>`);
+      popup.document.close();
+      setActionError("");
+      setNotice("Print dialog opened. Choose Save as PDF to create a QR PDF.");
+    } catch {
+      popup.close();
+      setActionError("QR codes could not be prepared for printing.");
+    }
+  }
+
   return (
     <div className="page">
       <div className="page-heading">
@@ -259,18 +325,31 @@ export default function TableManagement({
             </button>
           )}
           {canManage && (
+            <button className="secondary-button" onClick={() => void printQrSheet()}>
+              <Printer size={16} /> Print / save QR PDF
+            </button>
+          )}
+          {canManage && (
             <a className="secondary-button" href="/manager/staff">
               Staff management
             </a>
           )}
           {!canManage && (
-            <button
-              className="primary-button"
-              onClick={onStartOrder}
-              disabled={!tables.some((table) => table.active !== false)}
-            >
-              <Plus size={16} /> Start order
-            </button>
+            <>
+              <button
+                className="primary-button"
+                onClick={onStartOrder}
+                disabled={!tables.some(
+                  (table) =>
+                    table.active !== false && table.status === "Available",
+                )}
+              >
+                <Plus size={16} /> Start table order
+              </button>
+              <button className="secondary-button" onClick={onStartWalkIn}>
+                Walk-in / takeaway
+              </button>
+            </>
           )}
         </div>
       </div>

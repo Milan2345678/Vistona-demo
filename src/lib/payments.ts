@@ -13,6 +13,18 @@ export async function markPaid(
     const payment = await tx.payment.findUnique({ where: { providerOrderId } });
     if (!payment) return { ok: false as const, reason: "not_found" };
     if (payment.status === "PAID") return { ok: true as const, already: true };
+    await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${payment.orderId} FOR UPDATE`;
+    const counterPayment = await tx.payment.findFirst({
+      where: {
+        orderId: payment.orderId,
+        method: { in: ["CASH", "UPI"] },
+        status: "PAID",
+      },
+      select: { id: true },
+    });
+    if (counterPayment) {
+      return { ok: false as const, reason: "already_paid_another_method" };
+    }
     if (amountPaise !== undefined && amountPaise !== payment.amountPaise) {
       return { ok: false as const, reason: "amount_mismatch" };
     }

@@ -12,10 +12,12 @@ declare global {
 
 export default function PayButton({
   orderId,
+  tableToken,
   label = "Pay now",
   onPaid,
 }: {
   orderId: string;
+  tableToken?: string;
   label?: string;
   onPaid?: () => void;
 }) {
@@ -29,7 +31,7 @@ export default function PayButton({
       const r = await fetch("/api/payments/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({ orderId, ...(tableToken ? { tableToken } : {}) }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Could not start payment");

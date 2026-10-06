@@ -3,6 +3,11 @@
 import Image from "next/image";
 import { useEffect, useState, type FormEvent } from "react";
 import { ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  MAX_MENU_IMPORT_ITEMS,
+  parseMenuCsv,
+  type MenuImportDish,
+} from "@/lib/menu-csv";
 
 type MenuItem = {
   id: string;
@@ -48,6 +53,11 @@ export default function MenuManagement() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [bulkDialog, setBulkDialog] = useState(false);
+  const [bulkItems, setBulkItems] = useState<MenuImportDish[]>([]);
+  const [bulkFile, setBulkFile] = useState("");
+  const [bulkError, setBulkError] = useState("");
+  const [importing, setImporting] = useState(false);
 
   async function loadMenu() {
     setLoading(true);
@@ -171,6 +181,84 @@ export default function MenuManagement() {
     }
   }
 
+  function startBulkImport() {
+    setBulkItems([]);
+    setBulkFile("");
+    setBulkError("");
+    setBulkDialog(true);
+    setError("");
+    setNotice("");
+  }
+
+  async function selectCsvFile(file: File | undefined) {
+    setBulkItems([]);
+    setBulkFile("");
+    setBulkError("");
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setBulkError("Choose a .csv file.");
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      setBulkError("CSV files must be smaller than 1 MB.");
+      return;
+    }
+
+    try {
+      const items = parseMenuCsv(await file.text());
+      setBulkItems(items);
+      setBulkFile(file.name);
+    } catch (cause) {
+      setBulkError(
+        cause instanceof Error
+          ? cause.message
+          : "The CSV file could not be read.",
+      );
+    }
+  }
+
+  async function importDishes(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBulkError("");
+    if (!bulkItems.length) {
+      setBulkError("Choose a valid CSV file before importing.");
+      return;
+    }
+    setImporting(true);
+    try {
+      const response = await fetch("/api/restaurant/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: bulkItems }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok)
+        throw new Error(body.error ?? "Dishes could not be imported");
+      setBulkDialog(false);
+      setNotice(`${body.items.length} dishes imported to the menu`);
+      await loadMenu();
+    } catch (cause) {
+      setBulkError(
+        cause instanceof Error ? cause.message : "Dishes could not be imported",
+      );
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  function downloadCsvTemplate() {
+    const csv =
+      "name,description,category,price,vegetarian,available,imageUrl\r\n";
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "vistona-menu-template.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function toggleAvailability(item: MenuItem) {
     setError("");
     setNotice("");
@@ -235,9 +323,14 @@ export default function MenuManagement() {
             One menu powers waiter ordering, QR ordering, and kitchen tickets.
           </p>
         </div>
-        <button className="primary-button" onClick={startCreate}>
-          <Plus size={16} /> Add New Dish
-        </button>
+        <div className="manager-menu-heading-actions">
+          <button className="secondary-button" onClick={startBulkImport}>
+            Import CSV
+          </button>
+          <button className="primary-button" onClick={startCreate}>
+            <Plus size={16} /> Add New Dish
+          </button>
+        </div>
       </div>
       {notice && (
         <p className="menu-notice" role="status">
@@ -506,6 +599,93 @@ export default function MenuManagement() {
                     : dialog === "create"
                       ? "Save dish"
                       : "Save changes"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+
+      {bulkDialog && (
+        <div
+          className="table-modal-backdrop"
+          onClick={() => {
+            if (!importing) setBulkDialog(false);
+          }}
+        >
+          <section
+            className="table-modal menu-modal menu-import-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="menu-import-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="table-modal-head">
+              <div>
+                <span className="eyebrow">MENU MANAGEMENT</span>
+                <h2 id="menu-import-title">Import dishes from CSV</h2>
+              </div>
+              <button
+                className="icon-button"
+                aria-label="Close"
+                onClick={() => setBulkDialog(false)}
+                disabled={importing}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form className="table-form" onSubmit={importDishes}>
+              <p className="menu-import-help">
+                Upload up to {MAX_MENU_IMPORT_ITEMS} dishes at once. Required
+                columns: name, category, price. Optional columns: description,
+                vegetarian, available, imageUrl.
+              </p>
+              <button
+                type="button"
+                className="secondary-button menu-template-button"
+                onClick={downloadCsvTemplate}
+              >
+                Download CSV template
+              </button>
+              <label>
+                CSV file
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(event) =>
+                    void selectCsvFile(event.currentTarget.files?.[0])
+                  }
+                />
+              </label>
+              {bulkFile && (
+                <p className="menu-import-summary" role="status">
+                  {bulkFile}: {bulkItems.length} dishes ready to import.
+                </p>
+              )}
+              <p className="menu-import-help">
+                Use true/false, yes/no, or 1/0 for vegetarian and available.
+                CSV values containing commas should be enclosed in double
+                quotes. Each import is all-or-nothing.
+              </p>
+              {bulkError && (
+                <p className="auth-error" role="alert">
+                  {bulkError}
+                </p>
+              )}
+              <div className="table-modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setBulkDialog(false)}
+                  disabled={importing}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="primary-button"
+                  disabled={importing || !bulkItems.length}
+                >
+                  {importing ? "Importing..." : "Import dishes"}
                 </button>
               </div>
             </form>

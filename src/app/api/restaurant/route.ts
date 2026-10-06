@@ -8,7 +8,8 @@ export async function GET() {
 
   try {
     const restaurantResult = await pool.query(
-      `SELECT r.id, r.name, r.slug, r.city, t.id AS "tenantId", t.name AS "tenantName"
+      `SELECT r.id, r.name, r.slug, r.city, r."gstRate", r."gstInclusive",
+              t.id AS "tenantId", t.name AS "tenantName"
          FROM "Restaurant" r JOIN "Tenant" t ON t.id = r."tenantId"
         WHERE r.id = $1 AND r."tenantId" = $2`,
       [auth.session.restaurantId, auth.session.tenantId],

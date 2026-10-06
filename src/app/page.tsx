@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import TableManagement from "@/components/table-management";
+import { calculateTax } from "@/lib/tax";
 import {
   Bell,
   ChefHat,
   ChevronDown,
+  ArrowRight,
   CircleDollarSign,
   Clock3,
+  Droplets,
   Grid2X2,
   LayoutDashboard,
   LogOut,
@@ -19,6 +22,7 @@ import {
   Pencil,
   Plus,
   QrCode,
+  ReceiptText,
   Search,
   Settings,
   ShoppingBag,
@@ -106,11 +110,23 @@ type Order = {
   items: string[];
   amount: number;
   status: OrderStatus;
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentMethod?: string | null;
   time: string;
   source: OrderSource;
   tenantId?: string;
   restaurantOrderId?: string;
   menuItemIds?: Record<string, string>;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  notes?: string;
+};
+type TableServiceRequest = {
+  id: string;
+  type: "BILL" | "WATER";
+  status: "OPEN";
+  createdAt: string;
+  tableNumber: string;
 };
 type MenuItem = {
   id?: string;
@@ -122,6 +138,7 @@ type MenuItem = {
   available: boolean;
   imageUrl?: string | null;
 };
+type PaymentMethod = "CASH" | "UPI";
 const initialTables: Table[] = [
   {
     id: "T01",
@@ -256,6 +273,7 @@ const initialOrders: Order[] = [
     items: ["Paneer Tikka x1", "Butter Chicken x1", "Butter Naan x4"],
     amount: 880,
     status: "Preparing",
+    paymentStatus: "pending",
     time: "12 min ago",
     source: "Waiter",
     tenantId: "anndham",
@@ -267,6 +285,7 @@ const initialOrders: Order[] = [
     items: ["Dal Makhani x1", "Garlic Naan x2"],
     amount: 540,
     status: "Ready",
+    paymentStatus: "pending",
     time: "8 min ago",
     source: "QR",
     tenantId: "anndham",
@@ -278,6 +297,7 @@ const initialOrders: Order[] = [
     items: ["Tandoori Chicken x1", "Jeera Rice x1"],
     amount: 760,
     status: "New",
+    paymentStatus: "pending",
     time: "16 min ago",
     source: "QR",
     tenantId: "anndham",
@@ -289,6 +309,7 @@ const initialOrders: Order[] = [
     items: ["Kadhai Paneer x1", "Plain Rice x1"],
     amount: 480,
     status: "Served",
+    paymentStatus: "pending",
     time: "22 min ago",
     source: "POS",
     tenantId: "anndham",
@@ -397,6 +418,21 @@ const sourceTone: Record<OrderSource, string> = {
   POS: "source-pos",
 };
 const money = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
+const paymentLabel = (
+  status: Order["paymentStatus"],
+  method?: string | null,
+) =>
+  status === "paid"
+    ? method === "cash"
+      ? "Paid · cash"
+      : method === "upi"
+        ? "Paid · UPI"
+        : "Paid online"
+    : status === "refunded"
+      ? "Refunded"
+      : status === "failed"
+        ? "Payment failed"
+        : "Not paid online";
 
 export default function Home() {
   const router = useRouter();
@@ -408,9 +444,12 @@ export default function Home() {
   const [tablesLoading, setTablesLoading] = useState(true);
   const [tablesError, setTablesError] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<TableServiceRequest[]>([]);
+  const [serviceRequestsError, setServiceRequestsError] = useState("");
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [orderingTable, setOrderingTable] = useState<Table | null>(null);
+  const [walkInOrder, setWalkInOrder] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [restaurantName, setRestaurantName] = useState("");
   const [restaurantCity, setRestaurantCity] = useState("");
@@ -422,6 +461,8 @@ export default function Home() {
   const [menuCategory, setMenuCategory] = useState("All");
   const [orderFilter, setOrderFilter] = useState("All");
   const [orderSourceFilter, setOrderSourceFilter] = useState("All");
+  const [gstRate, setGstRate] = useState(0);
+  const [gstInclusive, setGstInclusive] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -474,6 +515,8 @@ export default function Home() {
         setRestaurantName(restaurantData.restaurant.name);
         setRestaurantCity(restaurantData.restaurant.city);
         setRestaurantSlug(restaurantData.restaurant.slug);
+        setGstRate(Number(restaurantData.restaurant.gstRate ?? 0));
+        setGstInclusive(Boolean(restaurantData.restaurant.gstInclusive));
         setTables(restaurantData.tables.map(tableFromApi));
         setTablesError("");
         setTablesLoading(false);
@@ -516,14 +559,21 @@ export default function Home() {
               items: { menuItemId: string; name: string; quantity: number }[];
               amount: number;
               status: string;
+              paymentStatus: "pending" | "paid" | "failed" | "refunded";
+              paymentMethod?: string | null;
               createdAt: string;
               source: string;
+              customerName: string | null;
+              customerPhone: string | null;
+              notes: string;
             }) => ({
               id: `#${order.number}`,
               restaurantOrderId: order.id,
               table: order.tableNumber
                 ? `T${order.tableNumber.replace(/^T/, "")}`
-                : "QR order",
+                : order.source.toUpperCase() === "QR"
+                  ? "QR order"
+                  : "Walk-in / takeaway",
               waiter: order.waiterName ?? "QR guest",
               items: order.items.map(
                 (item) => `${item.name} x${item.quantity}`,
@@ -532,6 +582,8 @@ export default function Home() {
               status:
                 order.status[0].toUpperCase() +
                 order.status.slice(1).toLowerCase(),
+              paymentStatus: order.paymentStatus,
+              paymentMethod: order.paymentMethod,
               time: new Date(order.createdAt).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -545,9 +597,24 @@ export default function Home() {
               menuItemIds: Object.fromEntries(
                 order.items.map((item) => [item.name, item.menuItemId]),
               ),
+              customerName: order.customerName,
+              customerPhone: order.customerPhone,
+              notes: order.notes,
             }),
           ),
         );
+        if (role !== "Kitchen") {
+          const requestsResponse = await fetch("/api/service-requests");
+          const requestsData = await requestsResponse.json().catch(() => ({}));
+          if (!requestsResponse.ok) {
+            setServiceRequestsError(
+              requestsData.error ?? "Table service requests could not be loaded",
+            );
+          } else {
+            setServiceRequests(requestsData.requests);
+            setServiceRequestsError("");
+          }
+        }
         } catch {
           if (mounted) setToast("Orders could not be loaded. Tables remain available.");
         }
@@ -566,7 +633,7 @@ export default function Home() {
       mounted = false;
       window.clearInterval(timer);
     };
-  }, [signedIn]);
+  }, [signedIn, role]);
 
   if (!authReady || !signedIn)
     return <main className="session-loading">Checking your Vistona session...</main>;
@@ -589,15 +656,21 @@ export default function Home() {
     setToast(message);
     window.setTimeout(() => setToast(""), 2400);
   };
-  const currentTable =
-    orderingTable ??
-    tables.find((table) => table.active !== false && table.id === "T03") ??
-    tables.find((table) => table.active !== false);
-  const orderTotal = Object.entries(orderItems).reduce(
+  const currentTable = walkInOrder
+    ? null
+    : orderingTable ??
+      tables.find((table) => table.active !== false && table.id === "T03") ??
+      tables.find((table) => table.active !== false) ??
+      null;
+  const orderSubtotalCents = Object.entries(orderItems).reduce(
     (total, [name, quantity]) =>
-      total + (menu.find((item) => item.name === name)?.price ?? 0) * quantity,
+      total +
+      Math.round((menu.find((item) => item.name === name)?.price ?? 0) * 100) *
+        quantity,
     0,
   );
+  const orderTotal =
+    calculateTax(orderSubtotalCents, gstRate, gstInclusive).totalCents / 100;
   const filteredMenu = menu.filter(
     (item) =>
       item.name.toLowerCase().includes(menuSearch.toLowerCase()) &&
@@ -623,6 +696,7 @@ export default function Home() {
           notify(data.error ?? "Order update failed");
           return;
         }
+
         const data = await response.json();
         setOrders((current) =>
           current.map((order) =>
@@ -642,6 +716,27 @@ export default function Home() {
     notify("Order is not available for updates");
   }
 
+  async function completeServiceRequest(requestId: string) {
+    try {
+      const response = await fetch(`/api/service-requests/${requestId}`, {
+        method: "PATCH",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok)
+        throw new Error(data.error ?? "Request could not be completed");
+      setServiceRequests((current) =>
+        current.filter((request) => request.id !== requestId),
+      );
+      notify("Table request completed");
+    } catch (error) {
+      notify(
+        error instanceof Error
+          ? error.message
+          : "Request could not be completed",
+      );
+    }
+  }
+
   function sendToKitchen() {
     const selectedItems = Object.entries(orderItems).filter(
       ([, quantity]) => quantity > 0,
@@ -654,17 +749,19 @@ export default function Home() {
       notify("Menu data is still loading");
       return;
     }
-    const tableId = (
-      currentTable as (Table & { databaseId?: string }) | undefined
-    )?.databaseId;
-    if (!tableId) {
+    const tableId = currentTable?.databaseId;
+    if (!walkInOrder && !tableId) {
       notify("Select a table before sending the order");
       return;
     }
     void fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tableId, items }),
+      body: JSON.stringify({
+        tableId: tableId ?? null,
+        source: "WAITER",
+        items,
+      }),
     }).then(async (response) => {
       const data = await response.json();
       if (!response.ok) {
@@ -678,7 +775,9 @@ export default function Home() {
           restaurantOrderId: created.id,
           table: created.tableNumber
             ? `T${created.tableNumber.replace(/^T/, "")}`
-            : "QR order",
+            : created.source === "qr"
+              ? "QR order"
+              : "Walk-in / takeaway",
           waiter: userName,
           items: created.items.map(
             (item: { name: string; quantity: number }) =>
@@ -686,14 +785,46 @@ export default function Home() {
           ),
           amount: created.amount,
           status: "New",
+          paymentStatus: "pending",
           time: "Just now",
           source: "Waiter",
         },
         ...current,
       ]);
       setView("Kitchen");
+      setOrderItems({});
+      setWalkInOrder(false);
+      setOrderingTable(null);
       notify("KOT sent to kitchen");
-    });
+    }).catch(() => notify("Order could not be sent. Check your connection."));
+  }
+
+  async function recordManualPayment(orderId: string, method: PaymentMethod) {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ method }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error ?? "Payment could not be recorded");
+      }
+      setOrders((current) =>
+        current.map((order) =>
+          order.restaurantOrderId === orderId
+            ? { ...order, paymentStatus: "paid", paymentMethod: method.toLowerCase() }
+            : order,
+        ),
+      );
+      notify(`${method} payment recorded`);
+    } catch (error) {
+      notify(
+        error instanceof Error
+          ? error.message
+          : "Payment could not be recorded",
+      );
+    }
   }
 
   function addItem(name: string, delta: number) {
@@ -886,7 +1017,22 @@ export default function Home() {
             loading={tablesLoading}
             error={tablesError}
             onTable={setSelectedTable}
-            onNavigate={setView}
+            onStartOrder={() => {
+              const table = tables.find(
+                (entry) =>
+                  entry.active !== false && entry.status === "Available",
+              );
+              setOrderingTable(table ?? null);
+              setWalkInOrder(false);
+              setOrderItems({});
+              setView("Waiter Mode");
+            }}
+            onStartWalkIn={() => {
+              setOrderingTable(null);
+              setWalkInOrder(true);
+              setOrderItems({});
+              setView("Waiter Mode");
+            }}
             onTableChanged={(updated) => {
               setTables((current) => {
                 const existing = current.some(
@@ -911,6 +1057,11 @@ export default function Home() {
             showSourceFilter={role === "Manager"}
             title="Service, in one view"
             onOrder={setSelectedOrder}
+            serviceRequests={serviceRequests}
+            serviceRequestsError={serviceRequestsError}
+            onCompleteRequest={(requestId) =>
+              void completeServiceRequest(requestId)
+            }
           />
         )}
         {view === "QR Orders" && (
@@ -923,18 +1074,30 @@ export default function Home() {
             showSourceFilter={false}
             title="QR orders"
             onOrder={setSelectedOrder}
+            serviceRequests={serviceRequests}
+            serviceRequestsError={serviceRequestsError}
+            onCompleteRequest={(requestId) =>
+              void completeServiceRequest(requestId)
+            }
           />
         )}
         {view === "Waiter Mode" &&
-          (currentTable ? (
+          (currentTable || walkInOrder ? (
             <WaiterView
               currentTable={currentTable}
               menu={menu}
               orderItems={orderItems}
               total={orderTotal}
+              taxRate={gstRate}
+              taxInclusive={gstInclusive}
               onAdd={addItem}
               onSend={sendToKitchen}
               onNavigate={setView}
+              onWalkIn={() => {
+                setOrderingTable(null);
+                setWalkInOrder(true);
+                setOrderItems({});
+              }}
             />
           ) : (
             <div className="page">
@@ -971,7 +1134,20 @@ export default function Home() {
         )}
         {view === "Customers" && <CustomersView />}
         {view === "Reports" && <ReportsView />}
-        {view === "Settings" && <SettingsView />}
+        {view === "Settings" && (
+          <SettingsView
+            restaurantName={restaurantName}
+            restaurantCity={restaurantCity}
+            tables={tables}
+            gstRate={gstRate}
+            gstInclusive={gstInclusive}
+            onBillingChange={(rate, inclusive) => {
+              setGstRate(rate);
+              setGstInclusive(inclusive);
+            }}
+            onNavigate={setView}
+          />
+        )}
       </main>
 
       {selectedTable && (
@@ -980,6 +1156,9 @@ export default function Home() {
           onClose={() => setSelectedTable(null)}
           onStatus={changeTableStatus}
           onNavigate={(next) => {
+            setOrderingTable(selectedTable);
+            setWalkInOrder(false);
+            setOrderItems({});
             setSelectedTable(null);
             setView(next);
           }}
@@ -987,9 +1166,19 @@ export default function Home() {
       )}
       {selectedOrder && (
         <OrderPanel
-          order={selectedOrder}
+          order={
+            orders.find(
+              (order) =>
+                order.restaurantOrderId === selectedOrder.restaurantOrderId,
+            ) ?? selectedOrder
+          }
+          canComplete={role === "Manager"}
           onClose={() => setSelectedOrder(null)}
           onUpdate={updateOrder}
+          canRecordPayment={role === "Manager" || role === "Waiter"}
+          onRecordPayment={(orderId, method) =>
+            void recordManualPayment(orderId, method)
+          }
         />
       )}
       {toast && (
@@ -1157,7 +1346,8 @@ function TablesView({
   loading,
   error,
   onTable,
-  onNavigate,
+  onStartOrder,
+  onStartWalkIn,
   onTableChanged,
 }: {
   tables: Table[];
@@ -1166,7 +1356,8 @@ function TablesView({
   loading: boolean;
   error: string;
   onTable: (table: Table) => void;
-  onNavigate: (view: View) => void;
+  onStartOrder: () => void;
+  onStartWalkIn: () => void;
   onTableChanged: (table: Table) => void;
 }) {
   return (
@@ -1177,7 +1368,8 @@ function TablesView({
       loading={loading}
       error={error}
       onSelect={onTable}
-      onStartOrder={() => onNavigate("Waiter Mode")}
+      onStartOrder={onStartOrder}
+      onStartWalkIn={onStartWalkIn}
       onTableChanged={onTableChanged}
     />
   );
@@ -1192,6 +1384,9 @@ function OrdersView({
   showSourceFilter,
   title,
   onOrder,
+  serviceRequests,
+  serviceRequestsError,
+  onCompleteRequest,
 }: {
   orders: Order[];
   filter: string;
@@ -1201,6 +1396,9 @@ function OrdersView({
   showSourceFilter: boolean;
   title: string;
   onOrder: (order: Order) => void;
+  serviceRequests: TableServiceRequest[];
+  serviceRequestsError: string;
+  onCompleteRequest: (requestId: string) => void;
 }) {
   return (
     <div className="page">
@@ -1215,6 +1413,54 @@ function OrdersView({
           <span>visible tickets</span>
         </div>
       </div>
+      <section className="table-service-queue">
+        <div className="table-service-queue-heading">
+          <div>
+            <span className="eyebrow">TABLE SERVICE</span>
+            <h2>Guest requests</h2>
+          </div>
+          <span className="table-service-count">{serviceRequests.length} open</span>
+        </div>
+        {serviceRequestsError ? (
+          <p className="table-service-empty" role="alert">
+            {serviceRequestsError}
+          </p>
+        ) : serviceRequests.length === 0 ? (
+          <p className="table-service-empty">No open table requests.</p>
+        ) : (
+          <div className="table-service-request-list">
+            {serviceRequests.map((request) => {
+              const isBill = request.type === "BILL";
+              const RequestIcon = isBill ? ReceiptText : Droplets;
+              return (
+                <article className="table-service-request" key={request.id}>
+                  <span className={`table-service-icon ${isBill ? "bill" : "water"}`}>
+                    <RequestIcon size={18} />
+                  </span>
+                  <div>
+                    <strong>
+                      {isBill ? "Bring the bill" : "Water bottle requested"}
+                    </strong>
+                    <span>
+                      Table {request.tableNumber} ·{" "}
+                      {new Date(request.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <button
+                    className="secondary-button"
+                    onClick={() => onCompleteRequest(request.id)}
+                  >
+                    Mark done
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
       <div className="filter-bar">
         {["All", "New", "Preparing", "Ready", "Served", "Completed"].map(
           (item) => (
@@ -1237,6 +1483,7 @@ function OrdersView({
           <span>Table / waiter</span>
           <span>Items</span>
           <span>Amount</span>
+          <span>Payment</span>
           <span>Status</span>
         </div>
         {orders.map((order) => (
@@ -1257,6 +1504,11 @@ function OrdersView({
               {order.items.length} items<small>{order.items[0]}</small>
             </span>
             <strong>{money(order.amount)}</strong>
+            <span
+              className={`payment-pill ${order.paymentStatus === "paid" ? "paid" : "pending"}`}
+            >
+              {paymentLabel(order.paymentStatus, order.paymentMethod)}
+            </span>
             <span className={`status-pill ${statusTone[order.status]}`}>
               {order.status}
             </span>
@@ -1276,17 +1528,23 @@ function WaiterView({
   menu,
   orderItems,
   total,
+  taxRate,
+  taxInclusive,
   onAdd,
   onSend,
   onNavigate,
+  onWalkIn,
 }: {
-  currentTable: Table;
+  currentTable: Table | null;
   menu: MenuItem[];
   orderItems: Record<string, number>;
   total: number;
+  taxRate: number;
+  taxInclusive: boolean;
   onAdd: (name: string, delta: number) => void;
   onSend: () => void;
   onNavigate: (view: View) => void;
+  onWalkIn: () => void;
 }) {
   const [category, setCategory] = useState("All");
   const categories = ["All", ...new Set(menu.map((item) => item.category))];
@@ -1294,22 +1552,37 @@ function WaiterView({
     (item) => category === "All" || item.category === category,
   );
   const count = Object.values(orderItems).reduce((a, b) => a + b, 0);
+  const subtotal = Object.entries(orderItems).reduce(
+    (sum, [name, quantity]) =>
+      sum +
+      Math.round((menu.find((item) => item.name === name)?.price ?? 0) * 100) *
+        quantity,
+    0,
+  );
+  const tax = calculateTax(subtotal, taxRate, taxInclusive);
   return (
     <div className="page waiter-page">
       <div className="waiter-heading">
         <div>
           <span className="eyebrow">CAPTAIN MODE</span>
           <h1>
-            {currentTable.id} <span>· {currentTable.seats} guests</span>
+            {currentTable
+              ? `${currentTable.id} · ${currentTable.seats} guests`
+              : "Walk-in / takeaway"}
           </h1>
           <p>Build the order beside your guests.</p>
         </div>
-        <button
-          className="secondary-button"
-          onClick={() => onNavigate("Tables")}
-        >
-          Change table
-        </button>
+        <div className="waiter-heading-actions">
+          <button className="secondary-button" onClick={onWalkIn}>
+            Walk-in / takeaway
+          </button>
+          <button
+            className="secondary-button"
+            onClick={() => onNavigate("Tables")}
+          >
+            {currentTable ? "Change table" : "Choose table"}
+          </button>
+        </div>
       </div>
       <div className="category-tabs">
         {categories.map((item) => (
@@ -1354,7 +1627,11 @@ function WaiterView({
         <aside className="order-summary">
           <div>
             <span className="eyebrow">CURRENT ORDER</span>
-            <h2>Table {currentTable.id.replace("T", "")}</h2>
+            <h2>
+              {currentTable
+                ? `Table ${currentTable.id.replace("T", "")}`
+                : "Walk-in / takeaway"}
+            </h2>
           </div>
           <div className="summary-items">
             {Object.entries(orderItems)
@@ -1377,6 +1654,14 @@ function WaiterView({
             <span>{count} items</span>
             <strong>{money(total)}</strong>
           </div>
+          {taxRate > 0 && (
+            <div className="waiter-tax-breakdown">
+              <span>Taxable value</span>
+              <span>{money(tax.subtotalCents / 100)}</span>
+              <span>GST ({taxRate}%)</span>
+              <span>{money(tax.taxCents / 100)}</span>
+            </div>
+          )}
           <div className="order-origin">
             <span className="eyebrow">ORDER SOURCE</span>
             <strong>Manual waiter entry</strong>
@@ -1420,6 +1705,9 @@ function KitchenView({
             hour: "2-digit",
             minute: "2-digit",
           })}
+          <button className="secondary-button print-hide" onClick={() => window.print()}>
+            Print KOT tickets
+          </button>
         </div>
       </div>
       <div className="kitchen-board">
@@ -1444,6 +1732,11 @@ function KitchenView({
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
+                  {order.notes && (
+                    <p className="ticket-notes">
+                      <strong>Instructions:</strong> {order.notes}
+                    </p>
+                  )}
                   {column === "New" && (
                     <button
                       className="kitchen-button preparing"
@@ -1640,108 +1933,329 @@ function CustomersView() {
 }
 
 function ReportsView() {
+  const [period, setPeriod] = useState<"today" | "week" | "month">("today");
+  const [report, setReport] = useState<{
+    summary: {
+      orderCount: number;
+      paidCount: number;
+      pendingCount: number;
+      paidTotal: number;
+      taxTotal: number;
+      averagePaidOrder: number;
+      pendingTotal: number;
+    };
+    hourly: { hour: string; orders: number; sales: number }[];
+    topItems: { name: string; quantity: number; sales: number }[];
+  } | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    fetch(`/api/reports?period=${period}`, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error ?? "Report could not be loaded");
+        if (mounted) {
+          setReport(data);
+          setError("");
+        }
+      })
+      .catch((cause: unknown) => {
+        if (mounted) {
+          setError(
+            cause instanceof Error ? cause.message : "Report could not be loaded",
+          );
+        }
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [period]);
+
+  const periodLabel =
+    period === "today" ? "Today" : period === "week" ? "This week" : "This month";
+  const peakSales = Math.max(1, ...(report?.hourly.map((row) => row.sales) ?? []));
   return (
     <div className="page">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">REPORTS · SEPTEMBER 16, 2026</span>
+          <span className="eyebrow">REPORTS · {periodLabel.toUpperCase()}</span>
           <h1>Read the rhythm of service.</h1>
-          <p>Useful signals for today, without the noise.</p>
+          <p>Sales shown are confirmed payments. Unpaid order value is reported separately.</p>
         </div>
-        <button className="secondary-button">
-          This week <ChevronDown size={15} />
-        </button>
+        <label className="report-period">
+          <span className="sr-only">Report period</span>
+          <select
+            value={period}
+            onChange={(event) =>
+              setPeriod(event.target.value as "today" | "week" | "month")
+            }
+          >
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+          </select>
+        </label>
       </div>
+      {error && <p className="auth-error" role="alert">{error}</p>}
       <div className="metrics">
-        <Metric label="Today's sales" value="₹42,850" note="Target ₹50,000" />
         <Metric
-          label="Average order"
-          value="₹630"
-          note="+₹48 this week"
-          positive
+          label="Paid sales"
+          value={report ? money(report.summary.paidTotal) : "—"}
+          note={`${report?.summary.paidCount ?? 0} paid orders`}
         />
-        <Metric label="Orders served" value="68" note="Across 42 tables" />
+        <Metric
+          label="Average paid order"
+          value={report ? money(report.summary.averagePaidOrder) : "—"}
+          note="Confirmed payments only"
+        />
+        <Metric
+          label="Orders"
+          value={report ? String(report.summary.orderCount) : "—"}
+          note={`${report?.summary.pendingCount ?? 0} payment(s) pending`}
+        />
+        <Metric
+          label="GST collected"
+          value={report ? money(report.summary.taxTotal) : "—"}
+          note="On confirmed paid orders"
+        />
       </div>
+      {report && report.summary.pendingCount > 0 && (
+        <p className="report-pending-note">
+          Pending collection: {money(report.summary.pendingTotal)}
+        </p>
+      )}
       <div className="report-grid">
         <section className="report-card">
-          <SectionTitle title="Sales by hour" action="Today" />
-          <div className="bars">
-            {[28, 36, 44, 31, 52, 68, 84, 71, 93, 78, 62, 48].map(
-              (height, index) => (
-                <div className="bar-wrap" key={index}>
-                  <div className="bar" style={{ height: `${height}%` }} />
-                  <span>
-                    {index + 11 > 12 ? `${index - 1}p` : `${index + 11}a`}
-                  </span>
+          <SectionTitle title="Paid sales by hour" action={periodLabel} />
+          {report?.hourly.length ? (
+            <div className="bars">
+              {report.hourly.map((row) => (
+                <div className="bar-wrap" key={row.hour} title={`${row.hour}: ${money(row.sales)}`}>
+                  <div
+                    className="bar"
+                    style={{ height: `${Math.max(4, (row.sales / peakSales) * 100)}%` }}
+                  />
+                  <span>{row.hour.slice(0, 2)}</span>
                 </div>
-              ),
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="report-empty">No sales in this period yet.</p>
+          )}
         </section>
         <section className="report-card">
-          <SectionTitle title="Top selling items" action="This week" />
-          <div className="ranking">
-            {[
-              ["Butter Naan", "41", "₹2,460"],
-              ["Butter Chicken", "24", "₹7,680"],
-              ["Dal Makhani", "19", "₹4,180"],
-              ["Paneer Tikka", "17", "₹3,740"],
-            ].map(([name, count, total], index) => (
-              <div className="rank-row" key={name}>
-                <span>0{index + 1}</span>
-                <strong>{name}</strong>
-                <small>{count} sold</small>
-                <b>{total}</b>
-              </div>
-            ))}
-          </div>
+          <SectionTitle title="Top selling items" action={periodLabel} />
+          {report?.topItems.length ? (
+            <div className="ranking">
+              {report.topItems.map((item, index) => (
+                <div className="rank-row" key={item.name}>
+                  <span>0{index + 1}</span>
+                  <strong>{item.name}</strong>
+                  <small>{item.quantity} sold</small>
+                  <b>{money(item.sales)}</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="report-empty">No menu item sales in this period yet.</p>
+          )}
         </section>
       </div>
     </div>
   );
 }
 
-function SettingsView() {
+function GSTSettings({
+  gstRate,
+  gstInclusive,
+  onSaved,
+}: {
+  gstRate: number;
+  gstInclusive: boolean;
+  onSaved: (rate: number, inclusive: boolean) => void;
+}) {
+  const [rate, setRate] = useState(String(gstRate));
+  const [inclusive, setInclusive] = useState(gstInclusive);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  async function saveSettings() {
+    const numericRate = Number(rate);
+    if (!Number.isFinite(numericRate) || numericRate < 0 || numericRate > 28) {
+      setError("Enter a GST rate from 0% to 28%.");
+      setMessage("");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/restaurant/billing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gstRate: numericRate,
+          gstInclusive: inclusive,
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body.error ?? "GST settings could not be saved");
+      }
+      onSaved(body.billing.gstRate, body.billing.gstInclusive);
+      setMessage("GST settings saved. New orders will use this configuration.");
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "GST settings could not be saved",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="gst-settings">
+      <div>
+        <span className="eyebrow">BILLING & TAX</span>
+        <h2>GST configuration</h2>
+        <p>
+          Set the restaurant’s applicable GST rate. Existing orders keep their
+          original tax snapshot.
+        </p>
+      </div>
+      <label>
+        GST rate (%)
+        <input
+          type="number"
+          min="0"
+          max="28"
+          step="0.01"
+          value={rate}
+          onChange={(event) => setRate(event.target.value)}
+        />
+      </label>
+      <label className="gst-inclusive-toggle">
+        <input
+          type="checkbox"
+          checked={inclusive}
+          onChange={(event) => setInclusive(event.target.checked)}
+        />
+        Menu prices already include GST
+      </label>
+      <button
+        className="primary-button"
+        onClick={() => void saveSettings()}
+        disabled={saving}
+      >
+        {saving ? "Saving..." : "Save GST settings"}
+      </button>
+      {message && <p role="status" className="customer-service-success">{message}</p>}
+      {error && <p role="alert" className="auth-error">{error}</p>}
+    </section>
+  );
+}
+
+function SettingsView({
+  restaurantName,
+  restaurantCity,
+  tables,
+  gstRate,
+  gstInclusive,
+  onBillingChange,
+  onNavigate,
+}: {
+  restaurantName: string;
+  restaurantCity: string;
+  tables: Table[];
+  gstRate: number;
+  gstInclusive: boolean;
+  onBillingChange: (rate: number, inclusive: boolean) => void;
+  onNavigate: (view: View) => void;
+}) {
   return (
     <div className="page">
       <div className="page-heading">
         <div>
           <span className="eyebrow">SETTINGS</span>
           <h1>Make the system yours.</h1>
-          <p>Restaurant details and service preferences.</p>
+          <p>
+            Quick links to restaurant, menu, floor, staff, and account controls.
+          </p>
         </div>
       </div>
       <div className="settings-list">
-        {[
-          [
-            "Restaurant information",
-            "Anndham Family Dhaba · Jaipur, Rajasthan",
-            Store,
-          ],
-          ["Tables & floor", "12 tables · 52 total seats", Grid2X2],
-          ["Tax / GST", "5% restaurant GST enabled", CircleDollarSign],
-          ["Staff & roles", "8 active staff members", Users],
-          ["Notifications", "Sound alerts enabled for kitchen", Bell],
-        ].map(([title, detail, Icon]) => {
-          const ItemIcon = Icon as typeof Store;
-          return (
-            <button className="setting-row" key={title as string}>
-              <div className="setting-icon">
-                <ItemIcon size={18} />
-              </div>
-              <div>
-                <strong>{title as string}</strong>
-                <span>{detail as string}</span>
-              </div>
-              <ChevronDown size={17} />
-            </button>
-          );
-        })}
+        <a className="setting-row" href="/account">
+          <div className="setting-icon">
+            <Store size={18} />
+          </div>
+          <GSTSettings
+            key={`${gstRate}:${gstInclusive}`}
+            gstRate={gstRate}
+            gstInclusive={gstInclusive}
+            onSaved={onBillingChange}
+          />
+          <div>
+            <strong>Restaurant and account information</strong>
+            <span>
+              {restaurantName || "Restaurant"} · {restaurantCity || "Location"}
+            </span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
+        <button
+          className="setting-row"
+          onClick={() => onNavigate("Tables")}
+        >
+          <div className="setting-icon">
+            <Grid2X2 size={18} />
+          </div>
+          <div>
+            <strong>Tables and floor</strong>
+            <span>
+              {tables.length} {tables.length === 1 ? "table" : "tables"} set up
+            </span>
+          </div>
+          <ArrowRight size={17} />
+        </button>
+        <a className="setting-row" href="/manager/menu">
+          <div className="setting-icon">
+            <Utensils size={18} />
+          </div>
+          <div>
+            <strong>Menu and dishes</strong>
+            <span>Manage dishes shown on your QR menu</span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
+        <a className="setting-row" href="/manager/staff">
+          <div className="setting-icon">
+            <Users size={18} />
+          </div>
+          <div>
+            <strong>Staff and roles</strong>
+            <span>Manage restaurant staff accounts and invitations</span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
+        <a className="setting-row" href="/account">
+          <div className="setting-icon">
+            <UserRound size={18} />
+          </div>
+          <div>
+            <strong>Account security</strong>
+            <span>Update your profile or change your password</span>
+          </div>
+          <ArrowRight size={17} />
+        </a>
       </div>
       <div className="rbac-panel">
         <div className="section-title">
           <h2>Role-based access</h2>
-          <button>Tenant RBAC</button>
+          <span>Access by role</span>
         </div>
         <div className="rbac-grid">
           {[
@@ -1864,13 +2378,49 @@ function TablePanel({
 
 function OrderPanel({
   order,
+  canComplete,
+  canRecordPayment,
   onClose,
   onUpdate,
+  onRecordPayment,
 }: {
   order: Order;
+  canComplete: boolean;
+  canRecordPayment: boolean;
   onClose: () => void;
   onUpdate: (id: string, status: OrderStatus) => void;
+  onRecordPayment: (orderId: string, method: PaymentMethod) => void;
 }) {
+  const [invoiceError, setInvoiceError] = useState("");
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+
+  async function downloadInvoice() {
+    if (!order.restaurantOrderId) return;
+    setDownloadingInvoice(true);
+    setInvoiceError("");
+    try {
+      const response = await fetch(
+        `/api/orders/${encodeURIComponent(order.restaurantOrderId)}/bill`,
+      );
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error ?? "Invoice could not be downloaded");
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `vistona-invoice-${order.id.replace("#", "")}.pdf`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (cause) {
+      setInvoiceError(
+        cause instanceof Error ? cause.message : "Invoice could not be downloaded",
+      );
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  }
+
   return (
     <div className="drawer-backdrop" onClick={onClose}>
       <aside className="drawer" onClick={(event) => event.stopPropagation()}>
@@ -1895,6 +2445,31 @@ function OrderPanel({
             {order.table} · {order.waiter} · {order.time}
           </p>
         </div>
+        {(order.customerName || order.customerPhone || order.notes) && (
+          <div className="drawer-section">
+            <span className="eyebrow">GUEST DETAILS</span>
+            {order.customerName && (
+              <div className="drawer-order-line">
+                <span>Customer</span>
+                <strong>{order.customerName}</strong>
+              </div>
+            )}
+            {order.customerPhone && (
+              <div className="drawer-order-line">
+                <span>Mobile</span>
+                <a href={`tel:${order.customerPhone}`}>
+                  {order.customerPhone}
+                </a>
+              </div>
+            )}
+            {order.notes && (
+              <div className="drawer-order-line guest-instructions">
+                <span>Kitchen instructions</span>
+                <strong>{order.notes}</strong>
+              </div>
+            )}
+          </div>
+        )}
         <div className="drawer-section">
           <span className="eyebrow">ITEMS</span>
           {order.items.map((item) => (
@@ -1910,8 +2485,61 @@ function OrderPanel({
           </div>
           <div className="drawer-total">
             <span>Total</span>
-            <strong>{money(order.amount)}</strong>
+            <div className="drawer-payment-total">
+              <strong>{money(order.amount)}</strong>
+              <span
+                className={`payment-pill ${order.paymentStatus === "paid" ? "paid" : "pending"}`}
+              >
+                {order.paymentStatus === "paid" &&
+                order.paymentMethod !== "cash" &&
+                order.paymentMethod !== "upi"
+                  ? "Online payment confirmed by Razorpay"
+                  : paymentLabel(order.paymentStatus, order.paymentMethod)}
+              </span>
+            </div>
           </div>
+        </div>
+        <div className="drawer-section">
+          <span className="eyebrow">BILL & PAYMENT</span>
+          <button
+            className="secondary-button"
+            onClick={() => void downloadInvoice()}
+            disabled={downloadingInvoice}
+          >
+            {downloadingInvoice ? "Preparing bill..." : "Download GST bill / receipt"}
+          </button>
+          {invoiceError && <p className="auth-error" role="alert">{invoiceError}</p>}
+          {canRecordPayment &&
+            order.paymentStatus !== "paid" &&
+            order.paymentStatus !== "refunded" && (
+              <>
+                <p className="inline-note">
+                  Record cash or UPI received at the restaurant.
+                </p>
+                <div className="drawer-actions">
+                  <button
+                    className="secondary-button"
+                    onClick={() =>
+                      order.restaurantOrderId &&
+                      onRecordPayment(order.restaurantOrderId, "CASH")
+                    }
+                    disabled={!order.restaurantOrderId}
+                  >
+                    Record cash
+                  </button>
+                  <button
+                    className="secondary-button"
+                    onClick={() =>
+                      order.restaurantOrderId &&
+                      onRecordPayment(order.restaurantOrderId, "UPI")
+                    }
+                    disabled={!order.restaurantOrderId}
+                  >
+                    Record UPI
+                  </button>
+                </div>
+              </>
+            )}
         </div>
         <div className="drawer-section">
           <span className="eyebrow">MOVE TICKET</span>
@@ -1949,7 +2577,24 @@ function OrderPanel({
                 Mark served
               </button>
             )}
+            {order.status === "Served" && canComplete && (
+              <button
+                className="primary-button"
+                onClick={() => {
+                  onUpdate(order.id, "Completed");
+                  onClose();
+                }}
+              >
+                <PackageCheck size={15} /> Guest left · complete & free table
+              </button>
+            )}
           </div>
+          {order.status === "Served" && !canComplete && (
+            <p className="inline-note">
+              Ask a manager to confirm the guest has left and release this
+              table.
+            </p>
+          )}
         </div>
       </aside>
     </div>

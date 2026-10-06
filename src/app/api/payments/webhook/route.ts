@@ -22,6 +22,12 @@ export async function POST(req: Request) {
     const result = await markPaid(p.order_id, p.id, p.amount);
     if (!result.ok && result.reason === "amount_mismatch") {
       console.error("[razorpay] amount mismatch", p.id, p.order_id);
+    } else if (!result.ok && result.reason === "already_paid_another_method") {
+      console.error(
+        "[razorpay] captured payment conflicts with a recorded counter payment",
+        p.id,
+        p.order_id,
+      );
     }
   }
   // payment.failed is intentionally ignored: the customer can retry on the same
