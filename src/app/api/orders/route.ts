@@ -18,6 +18,15 @@ const createSchema = z.object({
     .max(50),
 });
 
+function logOrderError(error: unknown) {
+  const dbError = error as { code?: unknown; message?: unknown };
+  console.error("[orders]", {
+    code: typeof dbError?.code === "string" ? dbError.code : undefined,
+    message:
+      typeof dbError?.message === "string" ? dbError.message : undefined,
+  });
+}
+
 export async function GET(request: Request) {
   const auth = await requireSession();
   if (!auth.session) return auth.response;
@@ -38,7 +47,8 @@ export async function GET(request: Request) {
       since,
     );
     return NextResponse.json({ orders });
-  } catch {
+  } catch (err) {
+    logOrderError(err);
     return NextResponse.json(
       { error: "Orders are temporarily unavailable" },
       { status: 503 },
@@ -77,6 +87,7 @@ export async function POST(request: Request) {
     if (error instanceof OrderValidationError) {
       return NextResponse.json({ error: error.message }, { status: 422 });
     }
+    logOrderError(error);
     return NextResponse.json(
       { error: "Order could not be created" },
       { status: 503 },

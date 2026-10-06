@@ -438,6 +438,8 @@ export default function Home() {
   const router = useRouter();
   const [signedIn, setSignedIn] = useState(false);
   const [authReady, setAuthReady] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authRetry, setAuthRetry] = useState(0);
   const [role, setRole] = useState<Role>("Manager");
   const [view, setView] = useState<View>("Dashboard");
   const [tables, setTables] = useState<Table[]>([]);
@@ -466,40 +468,63 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true;
-    fetch("/api/auth/session")
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return response.json();
-      })
-      .then((data) => {
-        if (!mounted) return;
-        if (!data?.user) {
-          router.replace("/login");
+    const checkSession = async () => {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          const response = await fetch("/api/auth/session", {
+            cache: "no-store",
+          });
+          if (response.status === 401) {
+            if (mounted) router.replace("/login");
+            return;
+          }
+          if (!response.ok) {
+            if (attempt < 2) {
+              await new Promise((resolve) => window.setTimeout(resolve, 3000));
+              continue;
+            }
+            if (mounted)
+              setAuthError("Session service is temporarily unavailable.");
+            return;
+          }
+
+          const data = await response.json();
+          if (!mounted) return;
+          if (!data?.user) {
+            setAuthError("Session could not be verified. Please retry.");
+            return;
+          }
+          const nextRole = (data.user.role[0].toUpperCase() +
+            data.user.role.slice(1)) as Role;
+          setRole(nextRole);
+          setUserName(data.user.name ?? data.user.email);
+          setSignedIn(true);
+          setView(
+            nextRole === "Kitchen"
+              ? "Kitchen"
+              : nextRole === "Waiter"
+                ? "Tables"
+                : "Dashboard",
+          );
+          return;
+        } catch {
+          if (attempt < 2) {
+            await new Promise((resolve) => window.setTimeout(resolve, 3000));
+            continue;
+          }
+          if (mounted)
+            setAuthError("Could not reach the session service. Please retry.");
           return;
         }
-        const nextRole = (data.user.role[0].toUpperCase() +
-          data.user.role.slice(1)) as Role;
-        setRole(nextRole);
-        setUserName(data.user.name ?? data.user.email);
-        setSignedIn(true);
-        setView(
-          nextRole === "Kitchen"
-            ? "Kitchen"
-            : nextRole === "Waiter"
-              ? "Tables"
-              : "Dashboard",
-        );
-      })
-      .catch(() => {
-        if (mounted) router.replace("/login");
-      })
-      .finally(() => {
-        if (mounted) setAuthReady(true);
-      });
+      }
+    };
+    void checkSession().finally(() => {
+      if (mounted) setAuthReady(true);
+    });
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [router, authRetry]);
 
   useEffect(() => {
     if (!signedIn) return;
@@ -627,16 +652,56 @@ export default function Home() {
         }
       }
     };
-    void loadData();
-    const timer = window.setInterval(() => void loadData(), 5000);
+    let stopped = false;
+    let running = false;
+    let timer: number | undefined;
+    const tick = async () => {
+      if (stopped || running) return;
+      running = true;
+      try {
+        if (!document.hidden) await loadData();
+      } catch {
+        // loadData already surfaces its request errors in dashboard state.
+      } finally {
+        running = false;
+        if (!stopped) timer = window.setTimeout(() => void tick(), 5000);
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden || stopped || running) return;
+      if (timer) window.clearTimeout(timer);
+      void tick();
+    };
+    void tick();
+    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
+      stopped = true;
       mounted = false;
-      window.clearInterval(timer);
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [signedIn, role]);
 
   if (!authReady || !signedIn)
-    return <main className="session-loading">Checking your Vistona session...</main>;
+    return (
+      <main className="session-loading">
+        {authError ? (
+          <>
+            <p>{authError}</p>
+            <button
+              onClick={() => {
+                setAuthError("");
+                setAuthRetry((retry) => retry + 1);
+              }}
+            >
+              Retry
+            </button>
+          </>
+        ) : (
+          "Checking your Vistona session..."
+        )}
+      </main>
+    );
 
   async function signOut() {
     try {
