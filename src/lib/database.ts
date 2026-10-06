@@ -1,14 +1,17 @@
 import { Pool, type PoolClient } from "pg";
 
-const globalForPool = globalThis as unknown as { pgPool?: Pool };
+const globalForPg = globalThis as unknown as { pgPool?: Pool };
 
-function createPool() {
-  return new Pool({ connectionString: process.env.DATABASE_URL, max: 10 });
-}
+export const pool =
+  globalForPg.pgPool ??
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 3,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 5_000,
+  });
 
-export const pool = globalForPool.pgPool ?? createPool();
-
-if (process.env.NODE_ENV !== "production") globalForPool.pgPool = pool;
+globalForPg.pgPool = pool;
 
 export async function inTransaction<T>(
   operation: (client: PoolClient) => Promise<T>,

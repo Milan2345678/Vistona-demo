@@ -193,11 +193,31 @@ export default function CustomerMenu({
 
   useEffect(() => {
     if (!orderId) return;
-    const interval = window.setInterval(
-      () => void refreshOrderStatus(orderId),
-      10_000,
-    );
-    return () => window.clearInterval(interval);
+    let stopped = false;
+    let running = false;
+    let timer: number | undefined;
+    const tick = async () => {
+      if (stopped || running) return;
+      running = true;
+      try {
+        if (!document.hidden) await refreshOrderStatus(orderId);
+      } finally {
+        running = false;
+        if (!stopped) timer = window.setTimeout(() => void tick(), 10_000);
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden || stopped || running) return;
+      if (timer) window.clearTimeout(timer);
+      void tick();
+    };
+    timer = window.setTimeout(() => void tick(), 10_000);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stopped = true;
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [orderId, refreshOrderStatus]);
 
   const categories = ["All", ...new Set(menu.map((item) => item.category))];

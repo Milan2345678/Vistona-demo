@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/tenant";
+import { resolveSession } from "@/lib/tenant";
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ user: null }, { status: 401 });
+  const result = await resolveSession();
+  if (result.status === "unavailable") {
+    return NextResponse.json(
+      { error: "Service temporarily unavailable" },
+      { status: 503 },
+    );
+  }
+  if (result.status === "invalid")
+    return NextResponse.json({ user: null }, { status: 401 });
+  const session = result.session;
   return NextResponse.json({
     user: {
       id: session.sub,

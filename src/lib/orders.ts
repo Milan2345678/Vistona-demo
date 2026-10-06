@@ -226,17 +226,66 @@ export async function listOrders(
   since?: Date,
 ) {
   const result = await pool.query(
-    `SELECT id FROM "Order"
-      WHERE "tenantId" = $1 AND "restaurantId" = $2 AND ($3::timestamptz IS NULL OR "updatedAt" > $3)
-      ORDER BY "createdAt" DESC LIMIT 100`,
+    `SELECT o.id, o.number, o.source, o.status, o."paymentStatus", o.notes,
+            o."subtotalAmount", o."taxRate", o."taxAmount",
+            o."totalAmount", o."createdAt",
+            o."customerName", o."customerPhone",
+            t.number AS "tableNumber", u.name AS "waiterName",
+            p.method AS "paymentMethod"
+       FROM "Order" o
+       LEFT JOIN "RestaurantTable" t ON t.id = o."tableId" AND t."tenantId" = o."tenantId"
+       LEFT JOIN "User" u ON u.id = o."userId" AND u."tenantId" = o."tenantId"
+       LEFT JOIN LATERAL (
+         SELECT method FROM "Payment"
+          WHERE "orderId" = o.id AND status = 'PAID'
+          ORDER BY "createdAt" DESC LIMIT 1
+       ) p ON true
+      WHERE o."tenantId" = $1 AND o."restaurantId" = $2
+        AND ($3::timestamptz IS NULL OR o."updatedAt" > $3)
+      ORDER BY o."createdAt" DESC LIMIT 100`,
     [tenantId, restaurantId, since ?? null],
   );
-  const orders = await Promise.all(
-    result.rows.map((row) =>
-      fetchOrder(pool as unknown as PoolClient, row.id, tenantId, restaurantId),
-    ),
-  );
-  return orders.filter((order) => order !== null);
+  const orderIds = result.rows.map((order) => order.id);
+  const itemsByOrder = new Map<
+    string,
+    { menuItemId: string; name: string; quantity: number; unitPrice: number }[]
+  >();
+
+  if (orderIds.length) {
+    const itemResult = await pool.query(
+      `SELECT "menuItemId", "itemName", quantity, "unitPrice", "orderId"
+         FROM "OrderItem"
+        WHERE "orderId" = ANY($1::text[])
+          AND "tenantId" = $2 AND "restaurantId" = $3
+        ORDER BY "orderId", id`,
+      [orderIds, tenantId, restaurantId],
+    );
+    for (const item of itemResult.rows) {
+      const orderItems = itemsByOrder.get(item.orderId) ?? [];
+      orderItems.push({
+        menuItemId: item.menuItemId,
+        name: item.itemName,
+        quantity: item.quantity,
+        unitPrice: Number(item.unitPrice),
+      });
+      itemsByOrder.set(item.orderId, orderItems);
+    }
+  }
+
+  return result.rows.map((order) => ({
+    ...order,
+    amount: Number(order.totalAmount),
+    subtotalAmount: Number(order.subtotalAmount),
+    taxRate: Number(order.taxRate),
+    taxAmount: Number(order.taxAmount),
+    source: String(order.source).toLowerCase(),
+    status: String(order.status).toLowerCase(),
+    paymentStatus: String(order.paymentStatus).toLowerCase(),
+    paymentMethod: order.paymentMethod
+      ? String(order.paymentMethod).toLowerCase()
+      : null,
+    items: itemsByOrder.get(order.id) ?? [],
+  }));
 }
 
 const allowedTransitions: Record<string, string[]> = {
