@@ -1,194 +1,85 @@
-# Vistona Restaurant CRM / KOT SaaS
+# Vistona Restaurant CRM
 
-This repository is the Restaurant CRM and KOT system for multi-tenant restaurant operations. It is intentionally focused on SaaS-style restaurant management and not the older Vistona public website or bottle business project.
+Vistona Beta 2.0 is a multi-tenant restaurant operations app for managers, waiters, and kitchen staff. It combines restaurant setup, table and menu management, dine-in and takeaway order entry, kitchen order tickets (KOT), QR customer ordering, billing, and staff accounts.
 
-## Phase 1 product scope
+## What is implemented
 
-- Restaurant and tenant architecture
-- Authentication and RBAC
-- Waiter dashboard
-- Kitchen dashboard
-- KOT workflow
-- QR ordering
-- Manual waiter-created orders
-- Unified order lifecycle
-- Realtime updates where required
+- **Manager dashboard:** restaurant overview, tables, orders, reports, billing settings, menu management, and staff management.
+- **Waiter dashboard:** view active tables and orders, change table status, enter waiter or walk-in/POS orders, record cash or UPI payments, and download receipts.
+- **Kitchen dashboard:** follow KOTs through New, Preparing, and Ready; order status changes update the ticket and record KOT events.
+- **Menu and tables:** managers create and update menu categories, dishes, availability, and tables. Deleting a dish or table deactivates it so order history remains intact. Tables have stable QR tokens.
+- **QR ordering:** customers open a restaurant menu, submit orders for the table identified by its QR token, track that order, download a bill, and request a bill or water from staff.
+- **Billing and payments:** each order stores its tax calculation; managers configure GST rate and whether menu prices include GST. Staff can record cash or UPI. Optional Razorpay checkout uses signed checkout verification and a webhook.
+- **Staff and roles:** managers create waiter/kitchen accounts or issue single-use, seven-day invites. Staff can join through an invite. Password changes, role changes, and deactivation invalidate existing sessions.
 
-## Product architecture
+There is no standalone KOT API. KOT tickets and events are created with an order and updated as order statuses change.
 
-The application follows a tenant-first SaaS model:
+## Stack and data access
 
-- Each restaurant is treated as an isolated tenant in the platform.
-- Core transactional data should live in PostgreSQL, with per-tenant row-level security or scoped queries.
-- The Next.js/React/TypeScript frontend remains the operating layer for manager, waiter, and kitchen roles.
-- Order events should flow through a single lifecycle from `New -> Preparing -> Ready -> Served -> Completed`.
-- QR orders, manual waiter orders, and POS orders all share the same unified order ledger.
-
-## Recommended data model
-
-```text
-tenants
-  id
-  name
-  city
-  plan
-  status
-
-users
-  id
-  tenant_id
-  role
-  name
-  email
-
-restaurants
-  id
-  tenant_id
-  name
-  timezone
-  location
-
-tables
-  id
-  restaurant_id
-  number
-  seats
-  status
-
-menu_items
-  id
-  restaurant_id
-  name
-  category
-  price
-  vegetarian
-  available
-
-orders
-  id
-  restaurant_id
-  table_id
-  user_id
-  source (qr | waiter | pos)
-  status
-  total_amount
-  created_at
-
-order_items
-  id
-  order_id
-  menu_item_id
-  quantity
-  price
-
-kot_events
-  id
-  order_id
-  status
-  actor_id
-  created_at
-```
-
-## Implemented workflows
-
-- **Authentication and tenant isolation:** restaurant owners can create a tenant, restaurant, and manager account at `/signup`. Managers create waiter and kitchen accounts directly or issue single-use invitations at `/manager/staff`; staff accept invitations at `/join`. Signed-in users can update account details at `/account`.
-- **Role-based operations:** managers, waiters, and kitchen staff have protected dashboards at `/manager/dashboard`, `/waiter/dashboard`, and `/kitchen/dashboard`. API queries are scoped to the signed-in user's tenant and restaurant.
-- **Tables and QR codes:** managers can create, edit, and deactivate tables. Each table has a stable public QR token; changing its number does not invalidate printed QR codes. Waiters can view active tables and update table status.
-- **Menu management:** managers manage dishes and categories at `/manager/menu`. Menu items support descriptions, prices, vegetarian labels, availability, and optional image URLs. Removing a dish is a soft delete to preserve order history.
-- **Orders and KOT:** QR, waiter, and POS orders share an order lifecycle and server-derived pricing. Role-checked transitions update KOT tickets and record events. The dashboard refreshes data by polling the API.
-- **Customer QR ordering:** customers can view a restaurant menu and place an order from `/menu/{restaurantSlug}/table/{tableToken}`. The server resolves the table from its opaque token rather than trusting a submitted table number.
-- **Payments:** Razorpay order creation, payment verification, and webhook routes are available under `/api/payments`.
-
-Staff invitations expire after seven days and store only a hash of the invite code. Password changes, staff role changes, and staff deactivation invalidate existing sessions.
+- Next.js 16 App Router, React 19, TypeScript, and Tailwind CSS.
+- PostgreSQL hosted by Supabase.
+- `pg` is the runtime SQL client used by most API handlers.
+- Prisma 7 with `@prisma/adapter-pg` is used by the payment API and by Prisma migration/generation commands. The generated Prisma client is under `src/generated/prisma`.
+- The app has its own HMAC-signed `vistona_session` cookie and bcrypt password hashes. It does not use Supabase Auth or a Supabase JavaScript client. Protected API handlers re-check the active user and session version in PostgreSQL.
+- Tenant and restaurant scope comes from the verified session and is included in protected queries. Public QR endpoints use a restaurant slug and table QR token to scope customer actions.
 
 ## Local development
 
-Create `.env.local` with a PostgreSQL connection string and a random session secret of at least 32 characters:
+Use Node.js and npm. Create a local `.env.local` file with the variables listed below; keep its values private and out of version control.
 
-```env
-DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/vistona"
-JWT_SECRET="replace-with-a-random-secret-at-least-32-characters-long"
-DEMO_PASSWORD="demo123"
+```text
+DATABASE_URL
+JWT_SECRET
+RAZORPAY_KEY_ID       # optional; required for online checkout
+RAZORPAY_KEY_SECRET   # optional; required for online checkout
+RAZORPAY_WEBHOOK_SECRET # optional; required for online checkout
+DEMO_PASSWORD         # optional; used by the development seed
 ```
 
-Apply the initial schema and seed development demo users:
+`JWT_SECRET` must contain at least 32 characters. Configure Razorpay's `payment.captured` webhook to call `/api/payments/webhook` on the deployed app when online checkout is enabled. Never expose server environment variables to browser code.
 
-```bash
+Install dependencies, generate Prisma Client, apply pending migrations to the database named by `DATABASE_URL`, and start Next.js:
+
+```sh
+npm ci
+npm run db:generate
 npm run db:migrate
-npm run db:seed
-```
-
-The seed creates an Anndham tenant with `manager@vistona.local`, `waiter@vistona.local`, and `kitchen@vistona.local`, plus a separate Milan tenant with `milan@vistona.local`. All seed accounts share `DEMO_PASSWORD` (defaults to `demo123`); use them only in a local development database. The Milan fixture has distinct table/menu records for tenant-isolation checks and is not an onboarding mechanism.
-
-```bash
-npm install
 npm run dev
 ```
 
-Then open http://localhost:3000.
+Open `http://localhost:3000`. `npm run db:migrate` runs `prisma migrate deploy`; it applies checked-in migrations and does not reset the database. `prisma.config.ts` loads `.env.local` for local Prisma CLI commands. Confirm `DATABASE_URL` points to the intended database before applying migrations.
 
-## Real account onboarding
+For an optional local demo dataset, run `npm run db:seed` after migrations. The seed creates Anndham and Milan development fixtures; it is not required for normal signup and should not be used as a production onboarding path. Normal onboarding starts at `/signup`.
 
-The seeded users are development fixtures only. Normal onboarding begins at `/signup`, which creates a new tenant, restaurant, and manager account. Managers can add waiter/kitchen accounts from `/manager/staff` or generate a seven-day, single-use invite; staff join at `/join`. Any signed-in user can update their name or password at `/account`.
+## Database changes and deployment
 
-Apply schema migrations and regenerate the Prisma client before first use:
+Schema changes are represented by SQL migrations in `prisma/migrations`. Before deploying an application version that depends on a new schema, configure the target environment's private `DATABASE_URL`, then run:
 
-```bash
+```sh
 npm run db:generate
 npm run db:migrate
+npm run build
 ```
 
-These commands target the database selected by `DATABASE_URL`; verify it points at a development database before applying migrations. `npm run db:seed` remains available for local demos and tenant-isolation fixtures, but is not required for real account signup.
+Use the connection string copied from the Supabase dashboard for the environment where the app runs. Run migrations as a controlled release step against the intended database. Do not use `prisma migrate reset` for deployment. Set `JWT_SECRET` and, when using Razorpay, all three Razorpay variables in the server's environment settings. Deploy the Next.js app with a Node.js runtime for the PostgreSQL, password-hashing, PDF, and payment code.
 
-After pulling schema changes, run `npm run db:migrate` to apply pending migrations before restarting the app.
+Useful local checks:
 
-## Managing the restaurant menu
-
-Sign in as a manager and open `/manager/menu`. Use **Add New Dish** to create dishes individually, or **Import CSV** to add up to 100 dishes in one atomic import. The CSV requires `name`, `category`, and `price` columns; `description`, `vegetarian`, `available`, and `imageUrl` are optional. Boolean values accept `true`/`false`, `yes`/`no`, or `1`/`0`. Download the template from the import dialog for the exact header row.
-
-## Customer order tracking and online payments
-
-QR customers see a default 30-minute ready-time estimate and the current order status. The page refreshes status automatically while it remains open. Online checkout uses Razorpay; configure `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` in the server environment and configure Razorpay's `payment.captured` webhook to `https://<domain>/api/payments/webhook`. Customers can also choose to pay at the restaurant.
-
-QR orders can include a customer name, mobile number, and kitchen preferences/instructions. Customers can download a PDF receipt or send bill/water requests from the order confirmation. Staff can review and mark those table requests complete from the Orders or QR Orders screen.
-
-## Customer, kitchen, waiter, and manager operations
-
-- QR customer order tracking survives a refresh in the same browser tab and remains scoped to the table QR token. The customer sees the configured GST treatment and payable total before placing the order.
-- Kitchen staff can advance tickets from New to Preparing to Ready and print the active KOT board from the Kitchen view. Print only includes active tickets and kitchen instructions.
-- Waiters can start a table order or a walk-in/takeaway order. In order details, staff can record money actually received as cash or UPI and download an invoice/receipt. Manual collection is not a substitute for verifying an online payment; the app keeps the payment method on the order.
-- Managers can print the table QR sheet and select **Save as PDF** in the browser print dialog. Sales reports use database orders and distinguish confirmed paid sales from pending collection.
-- Configure the restaurant's GST rate and whether menu prices include GST in **Settings → GST configuration**. The default is 0%; confirm the applicable treatment with the restaurant before enabling tax. Each new order stores its tax snapshot so later setting changes do not rewrite historical bills.
-
-Apply the billing/payment migration on every environment before deploying this version:
-
-```bash
-npm run db:migrate
-npm run db:generate
-```
-
-The auth/staff migration adds `User.authVersion` and a tenant/restaurant-scoped `StaffInvite` table. Invites persist only a hash of the random code. Password changes, staff role changes, and deactivation invalidate prior session versions.
-
-Managers can manage restaurant tables from the dashboard's Tables section. Table creation, editing, and removal are server-scoped to the manager's tenant/restaurant; removal deactivates the row so historical orders remain attached. The table migration adds `active` and a stable database-generated `publicQrToken`. Managers can preview/download QR images locally; editing the table number or seat count does not change the token. Waiters see active tables only.
-
-The shared restaurant menu is managed at `/manager/menu` and read by both manager and waiter accounts. Dishes use dynamic restaurant categories, in-stock state, optional image URLs, server-derived restaurant scope, and soft removal so historical order snapshots remain intact. Public customer pages are `/menu/{restaurantSlug}/table/{tableToken}`; their QR menu/order API resolves the table from the opaque token, never from a client-submitted table number. New restaurants start without tables or menu dishes, so managers must add those before waiter or QR ordering.
-
-## Verification
-
-```bash
+```sh
 npm test
 npm run lint
 npm run build
 ```
 
-## API overview
+## Project layout
 
-- **Authentication:** `POST /api/auth/signup`, `/api/auth/join`, `/api/auth/login`, `/api/auth/logout`, and `/api/auth/change-password`; `GET /api/auth/session` and `/api/auth/account`; `PATCH /api/auth/account`.
-- **Staff:** `GET` and `POST /api/staff`; `PATCH` and `DELETE /api/staff/{staffId}`; `POST /api/staff/invite`.
-- **Restaurant and tables:** `GET /api/restaurant`; `POST /api/restaurant/tables`; `PATCH` and `DELETE /api/restaurant/tables/{tableId}`; `PATCH /api/restaurant/tables/{tableId}/status`.
-- **Menu:** `GET` and `POST /api/restaurant/menu`; `PATCH` and `DELETE /api/restaurant/menu/{menuItemId}`; `PATCH /api/restaurant/menu/{menuItemId}/availability`.
-- **Orders and KOT:** `GET` and `POST /api/orders`; `PATCH /api/orders/{orderId}/status`. Waiter/POS prices are calculated from menu records on the server, and order creation writes the initial KOT in a transaction.
-- **QR ordering:** `GET /api/qr/{restaurantSlug}/menu` and `POST /api/qr/{restaurantSlug}/orders` are public endpoints that use the table's QR token.
-- **Payments:** `POST /api/payments/create-order`, `/api/payments/verify`, and `/api/payments/webhook`.
+- `src/app/` — pages, role dashboards, customer QR pages, and App Router API endpoints.
+- `src/app/api/auth/` — signup, login, logout, session, account, and password routes.
+- `src/app/api/restaurant/`, `src/app/api/staff/`, `src/app/api/orders/` — restaurant administration, staff, order/KOT, billing, and reports.
+- `src/app/api/qr/` — public menu, QR ordering, order tracking, bills, and table service requests.
+- `src/app/api/payments/` — Razorpay order creation, verification, and webhook handling.
+- `src/lib/` — PostgreSQL pool, session checks, order logic, billing, and payment helpers.
+- `prisma/schema.prisma`, `prisma/migrations/` — Prisma data model and PostgreSQL migrations.
+- `postman/` — API collection and local API testing notes.
 
-All migrations are in `prisma/migrations`. Generate the Prisma client with `npm run db:generate`, then apply migrations with `npm run db:migrate`. These commands use the database configured through `DATABASE_URL`; verify the target before applying migrations. `prisma.config.ts` loads `.env.local` for local development. The SQL migrations are checked in, so deployment does not depend on downloading Prisma's schema engine at runtime.
+Most API routes are protected independently of the dashboard UI. See [the Postman guide](postman/README.md) for the route groups and collection workflow.
