@@ -9,7 +9,8 @@ export async function GET(
   const tableToken = new URL(request.url).searchParams.get("tableToken");
   try {
     const restaurant = await pool.query(
-      `SELECT id, name, "tenantId", "gstRate", "gstInclusive"
+      `SELECT id, name, "tenantId", "gstRate", "gstInclusive",
+              "logoUrl", "primaryColor", "accentColor"
          FROM "Restaurant" WHERE slug = $1 LIMIT 1`,
       [restaurantSlug],
     );
@@ -46,7 +47,13 @@ export async function GET(
       [restaurant.rows[0].tenantId, restaurant.rows[0].id],
     );
     return NextResponse.json({
-      restaurant: { name: restaurant.rows[0].name, slug: restaurantSlug },
+      restaurant: {
+        name: restaurant.rows[0].name,
+        slug: restaurantSlug,
+        logoUrl: restaurant.rows[0].logoUrl,
+        primaryColor: restaurant.rows[0].primaryColor,
+        accentColor: restaurant.rows[0].accentColor,
+      },
       table,
       billing: {
         gstRate: Number(restaurant.rows[0].gstRate),

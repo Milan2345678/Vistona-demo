@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import {
   Check,
   ChevronRight,
@@ -31,6 +31,25 @@ type PublicMenuItem = {
 };
 
 type Cart = Record<string, number>;
+type CustomerThemeStyle = CSSProperties & {
+  "--customer-primary": string;
+  "--customer-accent": string;
+};
+
+function validColor(value: unknown, fallback: string): string {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value)
+    ? value
+    : fallback;
+}
+
+function secureImageUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    return new URL(value).protocol === "https:" ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 type CustomerOrder = {
   id: string;
@@ -61,6 +80,11 @@ export default function CustomerMenu({
   tableToken: string;
 }) {
   const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantLogoUrl, setRestaurantLogoUrl] = useState<string | null>(
+    null,
+  );
+  const [primaryColor, setPrimaryColor] = useState("#173e32");
+  const [accentColor, setAccentColor] = useState("#4c9b5c");
   const [tableNumber, setTableNumber] = useState("");
   const [gstRate, setGstRate] = useState(0);
   const [gstInclusive, setGstInclusive] = useState(false);
@@ -116,6 +140,9 @@ export default function CustomerMenu({
       .then((body) => {
         if (!mounted) return;
         setRestaurantName(body.restaurant.name);
+        setRestaurantLogoUrl(secureImageUrl(body.restaurant.logoUrl));
+        setPrimaryColor(validColor(body.restaurant.primaryColor, "#173e32"));
+        setAccentColor(validColor(body.restaurant.accentColor, "#4c9b5c"));
         setTableNumber(body.table.number);
         setGstRate(Number(body.billing?.gstRate ?? 0));
         setGstInclusive(Boolean(body.billing?.gstInclusive));
@@ -255,6 +282,10 @@ export default function CustomerMenu({
           60_000,
       )
     : 0;
+  const themeStyle: CustomerThemeStyle = {
+    "--customer-primary": primaryColor,
+    "--customer-accent": accentColor,
+  };
 
   async function sendTableRequest(type: "BILL" | "WATER") {
     setRequestPending(type);
@@ -380,16 +411,29 @@ export default function CustomerMenu({
   }
 
   return (
-    <main className="customer-menu-page">
+    <main className="customer-menu-page" style={themeStyle}>
       <header className="customer-menu-header">
         <a
           className="customer-menu-brand"
           href={`/menu/${encodeURIComponent(restaurantSlug)}/table/${encodeURIComponent(tableToken)}`}
         >
-          <span className="brand-mark">V</span>
+          {restaurantLogoUrl ? (
+            <Image
+              className="customer-restaurant-logo"
+              src={restaurantLogoUrl}
+              alt={`${restaurantName} logo`}
+              width={42}
+              height={42}
+              unoptimized
+            />
+          ) : (
+            <span className="brand-mark" aria-hidden="true">
+              {restaurantName.slice(0, 1).toUpperCase() || "R"}
+            </span>
+          )}
           <span>
-            <strong>VISTONA</strong>
-            <small>RESTAURANT MENU</small>
+            <strong>{restaurantName || "Restaurant"}</strong>
+            <small>MENU &amp; ORDERING</small>
           </span>
         </a>
         <span className="customer-table-label">

@@ -41,6 +41,9 @@ export type RestaurantMinAggregateOutputType = {
   slug: string | null
   city: string | null
   timezone: string | null
+  logoUrl: string | null
+  primaryColor: string | null
+  accentColor: string | null
   gstRate: runtime.Decimal | null
   gstInclusive: boolean | null
   createdAt: Date | null
@@ -53,6 +56,9 @@ export type RestaurantMaxAggregateOutputType = {
   slug: string | null
   city: string | null
   timezone: string | null
+  logoUrl: string | null
+  primaryColor: string | null
+  accentColor: string | null
   gstRate: runtime.Decimal | null
   gstInclusive: boolean | null
   createdAt: Date | null
@@ -65,6 +71,9 @@ export type RestaurantCountAggregateOutputType = {
   slug: number
   city: number
   timezone: number
+  logoUrl: number
+  primaryColor: number
+  accentColor: number
   gstRate: number
   gstInclusive: number
   createdAt: number
@@ -87,6 +96,9 @@ export type RestaurantMinAggregateInputType = {
   slug?: true
   city?: true
   timezone?: true
+  logoUrl?: true
+  primaryColor?: true
+  accentColor?: true
   gstRate?: true
   gstInclusive?: true
   createdAt?: true
@@ -99,6 +111,9 @@ export type RestaurantMaxAggregateInputType = {
   slug?: true
   city?: true
   timezone?: true
+  logoUrl?: true
+  primaryColor?: true
+  accentColor?: true
   gstRate?: true
   gstInclusive?: true
   createdAt?: true
@@ -111,6 +126,9 @@ export type RestaurantCountAggregateInputType = {
   slug?: true
   city?: true
   timezone?: true
+  logoUrl?: true
+  primaryColor?: true
+  accentColor?: true
   gstRate?: true
   gstInclusive?: true
   createdAt?: true
@@ -210,6 +228,9 @@ export type RestaurantGroupByOutputType = {
   slug: string
   city: string
   timezone: string
+  logoUrl: string | null
+  primaryColor: string | null
+  accentColor: string | null
   gstRate: runtime.Decimal
   gstInclusive: boolean
   createdAt: Date
@@ -245,6 +266,9 @@ export type RestaurantWhereInput = {
   slug?: Prisma.StringFilter<"Restaurant"> | string
   city?: Prisma.StringFilter<"Restaurant"> | string
   timezone?: Prisma.StringFilter<"Restaurant"> | string
+  logoUrl?: Prisma.StringNullableFilter<"Restaurant"> | string | null
+  primaryColor?: Prisma.StringNullableFilter<"Restaurant"> | string | null
+  accentColor?: Prisma.StringNullableFilter<"Restaurant"> | string | null
   gstRate?: Prisma.DecimalFilter<"Restaurant"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFilter<"Restaurant"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Restaurant"> | Date | string
@@ -254,6 +278,7 @@ export type RestaurantWhereInput = {
   categories?: Prisma.MenuCategoryListRelationFilter
   menuItems?: Prisma.MenuItemListRelationFilter
   orders?: Prisma.OrderListRelationFilter
+  expenses?: Prisma.ExpenseListRelationFilter
   tableServiceRequests?: Prisma.TableServiceRequestListRelationFilter
   staffInvites?: Prisma.StaffInviteListRelationFilter
 }
@@ -265,6 +290,9 @@ export type RestaurantOrderByWithRelationInput = {
   slug?: Prisma.SortOrder
   city?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryColor?: Prisma.SortOrderInput | Prisma.SortOrder
+  accentColor?: Prisma.SortOrderInput | Prisma.SortOrder
   gstRate?: Prisma.SortOrder
   gstInclusive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -274,6 +302,7 @@ export type RestaurantOrderByWithRelationInput = {
   categories?: Prisma.MenuCategoryOrderByRelationAggregateInput
   menuItems?: Prisma.MenuItemOrderByRelationAggregateInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
+  expenses?: Prisma.ExpenseOrderByRelationAggregateInput
   tableServiceRequests?: Prisma.TableServiceRequestOrderByRelationAggregateInput
   staffInvites?: Prisma.StaffInviteOrderByRelationAggregateInput
 }
@@ -289,6 +318,9 @@ export type RestaurantWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Restaurant"> | string
   city?: Prisma.StringFilter<"Restaurant"> | string
   timezone?: Prisma.StringFilter<"Restaurant"> | string
+  logoUrl?: Prisma.StringNullableFilter<"Restaurant"> | string | null
+  primaryColor?: Prisma.StringNullableFilter<"Restaurant"> | string | null
+  accentColor?: Prisma.StringNullableFilter<"Restaurant"> | string | null
   gstRate?: Prisma.DecimalFilter<"Restaurant"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFilter<"Restaurant"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Restaurant"> | Date | string
@@ -298,6 +330,7 @@ export type RestaurantWhereUniqueInput = Prisma.AtLeast<{
   categories?: Prisma.MenuCategoryListRelationFilter
   menuItems?: Prisma.MenuItemListRelationFilter
   orders?: Prisma.OrderListRelationFilter
+  expenses?: Prisma.ExpenseListRelationFilter
   tableServiceRequests?: Prisma.TableServiceRequestListRelationFilter
   staffInvites?: Prisma.StaffInviteListRelationFilter
 }, "id" | "slug" | "id_tenantId">
@@ -309,6 +342,9 @@ export type RestaurantOrderByWithAggregationInput = {
   slug?: Prisma.SortOrder
   city?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  primaryColor?: Prisma.SortOrderInput | Prisma.SortOrder
+  accentColor?: Prisma.SortOrderInput | Prisma.SortOrder
   gstRate?: Prisma.SortOrder
   gstInclusive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -329,6 +365,9 @@ export type RestaurantScalarWhereWithAggregatesInput = {
   slug?: Prisma.StringWithAggregatesFilter<"Restaurant"> | string
   city?: Prisma.StringWithAggregatesFilter<"Restaurant"> | string
   timezone?: Prisma.StringWithAggregatesFilter<"Restaurant"> | string
+  logoUrl?: Prisma.StringNullableWithAggregatesFilter<"Restaurant"> | string | null
+  primaryColor?: Prisma.StringNullableWithAggregatesFilter<"Restaurant"> | string | null
+  accentColor?: Prisma.StringNullableWithAggregatesFilter<"Restaurant"> | string | null
   gstRate?: Prisma.DecimalWithAggregatesFilter<"Restaurant"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolWithAggregatesFilter<"Restaurant"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Restaurant"> | Date | string
@@ -340,6 +379,9 @@ export type RestaurantCreateInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -349,6 +391,7 @@ export type RestaurantCreateInput = {
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
@@ -360,6 +403,9 @@ export type RestaurantUncheckedCreateInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -368,6 +414,7 @@ export type RestaurantUncheckedCreateInput = {
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
@@ -378,6 +425,9 @@ export type RestaurantUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -387,6 +437,7 @@ export type RestaurantUpdateInput = {
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
@@ -398,6 +449,9 @@ export type RestaurantUncheckedUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -406,6 +460,7 @@ export type RestaurantUncheckedUpdateInput = {
   categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
@@ -417,6 +472,9 @@ export type RestaurantCreateManyInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -428,6 +486,9 @@ export type RestaurantUpdateManyMutationInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -440,6 +501,9 @@ export type RestaurantUncheckedUpdateManyInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -467,6 +531,9 @@ export type RestaurantCountOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   city?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrder
+  primaryColor?: Prisma.SortOrder
+  accentColor?: Prisma.SortOrder
   gstRate?: Prisma.SortOrder
   gstInclusive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -483,6 +550,9 @@ export type RestaurantMaxOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   city?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrder
+  primaryColor?: Prisma.SortOrder
+  accentColor?: Prisma.SortOrder
   gstRate?: Prisma.SortOrder
   gstInclusive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -495,6 +565,9 @@ export type RestaurantMinOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   city?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
+  logoUrl?: Prisma.SortOrder
+  primaryColor?: Prisma.SortOrder
+  accentColor?: Prisma.SortOrder
   gstRate?: Prisma.SortOrder
   gstInclusive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -549,6 +622,10 @@ export type RestaurantUncheckedUpdateManyWithoutTenantNestedInput = {
   update?: Prisma.RestaurantUpdateWithWhereUniqueWithoutTenantInput | Prisma.RestaurantUpdateWithWhereUniqueWithoutTenantInput[]
   updateMany?: Prisma.RestaurantUpdateManyWithWhereWithoutTenantInput | Prisma.RestaurantUpdateManyWithWhereWithoutTenantInput[]
   deleteMany?: Prisma.RestaurantScalarWhereInput | Prisma.RestaurantScalarWhereInput[]
+}
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
 }
 
 export type DecimalFieldUpdateOperationsInput = {
@@ -661,12 +738,29 @@ export type RestaurantUpdateOneRequiredWithoutTableServiceRequestsNestedInput = 
   update?: Prisma.XOR<Prisma.XOR<Prisma.RestaurantUpdateToOneWithWhereWithoutTableServiceRequestsInput, Prisma.RestaurantUpdateWithoutTableServiceRequestsInput>, Prisma.RestaurantUncheckedUpdateWithoutTableServiceRequestsInput>
 }
 
+export type RestaurantCreateNestedOneWithoutExpensesInput = {
+  create?: Prisma.XOR<Prisma.RestaurantCreateWithoutExpensesInput, Prisma.RestaurantUncheckedCreateWithoutExpensesInput>
+  connectOrCreate?: Prisma.RestaurantCreateOrConnectWithoutExpensesInput
+  connect?: Prisma.RestaurantWhereUniqueInput
+}
+
+export type RestaurantUpdateOneRequiredWithoutExpensesNestedInput = {
+  create?: Prisma.XOR<Prisma.RestaurantCreateWithoutExpensesInput, Prisma.RestaurantUncheckedCreateWithoutExpensesInput>
+  connectOrCreate?: Prisma.RestaurantCreateOrConnectWithoutExpensesInput
+  upsert?: Prisma.RestaurantUpsertWithoutExpensesInput
+  connect?: Prisma.RestaurantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RestaurantUpdateToOneWithWhereWithoutExpensesInput, Prisma.RestaurantUpdateWithoutExpensesInput>, Prisma.RestaurantUncheckedUpdateWithoutExpensesInput>
+}
+
 export type RestaurantCreateWithoutTenantInput = {
   id?: string
   name: string
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -675,6 +769,7 @@ export type RestaurantCreateWithoutTenantInput = {
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
@@ -685,6 +780,9 @@ export type RestaurantUncheckedCreateWithoutTenantInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -693,6 +791,7 @@ export type RestaurantUncheckedCreateWithoutTenantInput = {
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
@@ -733,6 +832,9 @@ export type RestaurantScalarWhereInput = {
   slug?: Prisma.StringFilter<"Restaurant"> | string
   city?: Prisma.StringFilter<"Restaurant"> | string
   timezone?: Prisma.StringFilter<"Restaurant"> | string
+  logoUrl?: Prisma.StringNullableFilter<"Restaurant"> | string | null
+  primaryColor?: Prisma.StringNullableFilter<"Restaurant"> | string | null
+  accentColor?: Prisma.StringNullableFilter<"Restaurant"> | string | null
   gstRate?: Prisma.DecimalFilter<"Restaurant"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFilter<"Restaurant"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Restaurant"> | Date | string
@@ -744,6 +846,9 @@ export type RestaurantCreateWithoutUsersInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -752,6 +857,7 @@ export type RestaurantCreateWithoutUsersInput = {
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
@@ -763,6 +869,9 @@ export type RestaurantUncheckedCreateWithoutUsersInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -770,6 +879,7 @@ export type RestaurantUncheckedCreateWithoutUsersInput = {
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
@@ -796,6 +906,9 @@ export type RestaurantUpdateWithoutUsersInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -804,6 +917,7 @@ export type RestaurantUpdateWithoutUsersInput = {
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
@@ -815,6 +929,9 @@ export type RestaurantUncheckedUpdateWithoutUsersInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -822,6 +939,7 @@ export type RestaurantUncheckedUpdateWithoutUsersInput = {
   categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
@@ -832,6 +950,9 @@ export type RestaurantCreateWithoutStaffInvitesInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -841,6 +962,7 @@ export type RestaurantCreateWithoutStaffInvitesInput = {
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
 }
 
@@ -851,6 +973,9 @@ export type RestaurantUncheckedCreateWithoutStaffInvitesInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -859,6 +984,7 @@ export type RestaurantUncheckedCreateWithoutStaffInvitesInput = {
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
 }
 
@@ -884,6 +1010,9 @@ export type RestaurantUpdateWithoutStaffInvitesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -893,6 +1022,7 @@ export type RestaurantUpdateWithoutStaffInvitesInput = {
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
 }
 
@@ -903,6 +1033,9 @@ export type RestaurantUncheckedUpdateWithoutStaffInvitesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -911,6 +1044,7 @@ export type RestaurantUncheckedUpdateWithoutStaffInvitesInput = {
   categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
 }
 
@@ -920,6 +1054,9 @@ export type RestaurantCreateWithoutTablesInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -928,6 +1065,7 @@ export type RestaurantCreateWithoutTablesInput = {
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
@@ -939,6 +1077,9 @@ export type RestaurantUncheckedCreateWithoutTablesInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -946,6 +1087,7 @@ export type RestaurantUncheckedCreateWithoutTablesInput = {
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
@@ -972,6 +1114,9 @@ export type RestaurantUpdateWithoutTablesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -980,6 +1125,7 @@ export type RestaurantUpdateWithoutTablesInput = {
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
@@ -991,6 +1137,9 @@ export type RestaurantUncheckedUpdateWithoutTablesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -998,6 +1147,7 @@ export type RestaurantUncheckedUpdateWithoutTablesInput = {
   categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
@@ -1008,6 +1158,9 @@ export type RestaurantCreateWithoutCategoriesInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1016,6 +1169,7 @@ export type RestaurantCreateWithoutCategoriesInput = {
   tables?: Prisma.RestaurantTableCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
@@ -1027,6 +1181,9 @@ export type RestaurantUncheckedCreateWithoutCategoriesInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1034,6 +1191,7 @@ export type RestaurantUncheckedCreateWithoutCategoriesInput = {
   tables?: Prisma.RestaurantTableUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
@@ -1060,6 +1218,9 @@ export type RestaurantUpdateWithoutCategoriesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1068,6 +1229,7 @@ export type RestaurantUpdateWithoutCategoriesInput = {
   tables?: Prisma.RestaurantTableUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
@@ -1079,6 +1241,9 @@ export type RestaurantUncheckedUpdateWithoutCategoriesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1086,6 +1251,7 @@ export type RestaurantUncheckedUpdateWithoutCategoriesInput = {
   tables?: Prisma.RestaurantTableUncheckedUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
@@ -1096,6 +1262,9 @@ export type RestaurantCreateWithoutMenuItemsInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1104,6 +1273,7 @@ export type RestaurantCreateWithoutMenuItemsInput = {
   tables?: Prisma.RestaurantTableCreateNestedManyWithoutRestaurantInput
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
@@ -1115,6 +1285,9 @@ export type RestaurantUncheckedCreateWithoutMenuItemsInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1122,6 +1295,7 @@ export type RestaurantUncheckedCreateWithoutMenuItemsInput = {
   tables?: Prisma.RestaurantTableUncheckedCreateNestedManyWithoutRestaurantInput
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
@@ -1148,6 +1322,9 @@ export type RestaurantUpdateWithoutMenuItemsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1156,6 +1333,7 @@ export type RestaurantUpdateWithoutMenuItemsInput = {
   tables?: Prisma.RestaurantTableUpdateManyWithoutRestaurantNestedInput
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
@@ -1167,6 +1345,9 @@ export type RestaurantUncheckedUpdateWithoutMenuItemsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1174,6 +1355,7 @@ export type RestaurantUncheckedUpdateWithoutMenuItemsInput = {
   tables?: Prisma.RestaurantTableUncheckedUpdateManyWithoutRestaurantNestedInput
   categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
@@ -1184,6 +1366,9 @@ export type RestaurantCreateWithoutOrdersInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1192,6 +1377,7 @@ export type RestaurantCreateWithoutOrdersInput = {
   tables?: Prisma.RestaurantTableCreateNestedManyWithoutRestaurantInput
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
@@ -1203,6 +1389,9 @@ export type RestaurantUncheckedCreateWithoutOrdersInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1210,6 +1399,7 @@ export type RestaurantUncheckedCreateWithoutOrdersInput = {
   tables?: Prisma.RestaurantTableUncheckedCreateNestedManyWithoutRestaurantInput
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
@@ -1236,6 +1426,9 @@ export type RestaurantUpdateWithoutOrdersInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1244,6 +1437,7 @@ export type RestaurantUpdateWithoutOrdersInput = {
   tables?: Prisma.RestaurantTableUpdateManyWithoutRestaurantNestedInput
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
@@ -1255,6 +1449,9 @@ export type RestaurantUncheckedUpdateWithoutOrdersInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1262,6 +1459,7 @@ export type RestaurantUncheckedUpdateWithoutOrdersInput = {
   tables?: Prisma.RestaurantTableUncheckedUpdateManyWithoutRestaurantNestedInput
   categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
@@ -1272,6 +1470,9 @@ export type RestaurantCreateWithoutTableServiceRequestsInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1281,6 +1482,7 @@ export type RestaurantCreateWithoutTableServiceRequestsInput = {
   categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
 
@@ -1291,6 +1493,9 @@ export type RestaurantUncheckedCreateWithoutTableServiceRequestsInput = {
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
@@ -1299,6 +1504,7 @@ export type RestaurantUncheckedCreateWithoutTableServiceRequestsInput = {
   categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
   menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  expenses?: Prisma.ExpenseUncheckedCreateNestedManyWithoutRestaurantInput
   staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
 }
 
@@ -1324,6 +1530,9 @@ export type RestaurantUpdateWithoutTableServiceRequestsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1333,6 +1542,7 @@ export type RestaurantUpdateWithoutTableServiceRequestsInput = {
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
 
@@ -1343,6 +1553,9 @@ export type RestaurantUncheckedUpdateWithoutTableServiceRequestsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1351,29 +1564,83 @@ export type RestaurantUncheckedUpdateWithoutTableServiceRequestsInput = {
   categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
   menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
 
-export type RestaurantCreateManyTenantInput = {
+export type RestaurantCreateWithoutExpensesInput = {
   id?: string
   name: string
   slug: string
   city: string
   timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
   gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: boolean
   createdAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutRestaurantsInput
+  users?: Prisma.UserCreateNestedManyWithoutRestaurantInput
+  tables?: Prisma.RestaurantTableCreateNestedManyWithoutRestaurantInput
+  categories?: Prisma.MenuCategoryCreateNestedManyWithoutRestaurantInput
+  menuItems?: Prisma.MenuItemCreateNestedManyWithoutRestaurantInput
+  orders?: Prisma.OrderCreateNestedManyWithoutRestaurantInput
+  tableServiceRequests?: Prisma.TableServiceRequestCreateNestedManyWithoutRestaurantInput
+  staffInvites?: Prisma.StaffInviteCreateNestedManyWithoutRestaurantInput
 }
 
-export type RestaurantUpdateWithoutTenantInput = {
+export type RestaurantUncheckedCreateWithoutExpensesInput = {
+  id?: string
+  tenantId: string
+  name: string
+  slug: string
+  city: string
+  timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
+  gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  gstInclusive?: boolean
+  createdAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutRestaurantInput
+  tables?: Prisma.RestaurantTableUncheckedCreateNestedManyWithoutRestaurantInput
+  categories?: Prisma.MenuCategoryUncheckedCreateNestedManyWithoutRestaurantInput
+  menuItems?: Prisma.MenuItemUncheckedCreateNestedManyWithoutRestaurantInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutRestaurantInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedCreateNestedManyWithoutRestaurantInput
+  staffInvites?: Prisma.StaffInviteUncheckedCreateNestedManyWithoutRestaurantInput
+}
+
+export type RestaurantCreateOrConnectWithoutExpensesInput = {
+  where: Prisma.RestaurantWhereUniqueInput
+  create: Prisma.XOR<Prisma.RestaurantCreateWithoutExpensesInput, Prisma.RestaurantUncheckedCreateWithoutExpensesInput>
+}
+
+export type RestaurantUpsertWithoutExpensesInput = {
+  update: Prisma.XOR<Prisma.RestaurantUpdateWithoutExpensesInput, Prisma.RestaurantUncheckedUpdateWithoutExpensesInput>
+  create: Prisma.XOR<Prisma.RestaurantCreateWithoutExpensesInput, Prisma.RestaurantUncheckedCreateWithoutExpensesInput>
+  where?: Prisma.RestaurantWhereInput
+}
+
+export type RestaurantUpdateToOneWithWhereWithoutExpensesInput = {
+  where?: Prisma.RestaurantWhereInput
+  data: Prisma.XOR<Prisma.RestaurantUpdateWithoutExpensesInput, Prisma.RestaurantUncheckedUpdateWithoutExpensesInput>
+}
+
+export type RestaurantUpdateWithoutExpensesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutRestaurantsNestedInput
   users?: Prisma.UserUpdateManyWithoutRestaurantNestedInput
   tables?: Prisma.RestaurantTableUpdateManyWithoutRestaurantNestedInput
   categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
@@ -1383,12 +1650,16 @@ export type RestaurantUpdateWithoutTenantInput = {
   staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
 }
 
-export type RestaurantUncheckedUpdateWithoutTenantInput = {
+export type RestaurantUncheckedUpdateWithoutExpensesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1401,12 +1672,73 @@ export type RestaurantUncheckedUpdateWithoutTenantInput = {
   staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
 }
 
+export type RestaurantCreateManyTenantInput = {
+  id?: string
+  name: string
+  slug: string
+  city: string
+  timezone?: string
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
+  gstRate?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  gstInclusive?: boolean
+  createdAt?: Date | string
+}
+
+export type RestaurantUpdateWithoutTenantInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutRestaurantNestedInput
+  tables?: Prisma.RestaurantTableUpdateManyWithoutRestaurantNestedInput
+  categories?: Prisma.MenuCategoryUpdateManyWithoutRestaurantNestedInput
+  menuItems?: Prisma.MenuItemUpdateManyWithoutRestaurantNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUpdateManyWithoutRestaurantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUpdateManyWithoutRestaurantNestedInput
+  staffInvites?: Prisma.StaffInviteUpdateManyWithoutRestaurantNestedInput
+}
+
+export type RestaurantUncheckedUpdateWithoutTenantInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutRestaurantNestedInput
+  tables?: Prisma.RestaurantTableUncheckedUpdateManyWithoutRestaurantNestedInput
+  categories?: Prisma.MenuCategoryUncheckedUpdateManyWithoutRestaurantNestedInput
+  menuItems?: Prisma.MenuItemUncheckedUpdateManyWithoutRestaurantNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutRestaurantNestedInput
+  expenses?: Prisma.ExpenseUncheckedUpdateManyWithoutRestaurantNestedInput
+  tableServiceRequests?: Prisma.TableServiceRequestUncheckedUpdateManyWithoutRestaurantNestedInput
+  staffInvites?: Prisma.StaffInviteUncheckedUpdateManyWithoutRestaurantNestedInput
+}
+
 export type RestaurantUncheckedUpdateManyWithoutTenantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  primaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accentColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gstRate?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   gstInclusive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1423,6 +1755,7 @@ export type RestaurantCountOutputType = {
   categories: number
   menuItems: number
   orders: number
+  expenses: number
   tableServiceRequests: number
   staffInvites: number
 }
@@ -1433,6 +1766,7 @@ export type RestaurantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extens
   categories?: boolean | RestaurantCountOutputTypeCountCategoriesArgs
   menuItems?: boolean | RestaurantCountOutputTypeCountMenuItemsArgs
   orders?: boolean | RestaurantCountOutputTypeCountOrdersArgs
+  expenses?: boolean | RestaurantCountOutputTypeCountExpensesArgs
   tableServiceRequests?: boolean | RestaurantCountOutputTypeCountTableServiceRequestsArgs
   staffInvites?: boolean | RestaurantCountOutputTypeCountStaffInvitesArgs
 }
@@ -1485,6 +1819,13 @@ export type RestaurantCountOutputTypeCountOrdersArgs<ExtArgs extends runtime.Typ
 /**
  * RestaurantCountOutputType without action
  */
+export type RestaurantCountOutputTypeCountExpensesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ExpenseWhereInput
+}
+
+/**
+ * RestaurantCountOutputType without action
+ */
 export type RestaurantCountOutputTypeCountTableServiceRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.TableServiceRequestWhereInput
 }
@@ -1504,6 +1845,9 @@ export type RestaurantSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   slug?: boolean
   city?: boolean
   timezone?: boolean
+  logoUrl?: boolean
+  primaryColor?: boolean
+  accentColor?: boolean
   gstRate?: boolean
   gstInclusive?: boolean
   createdAt?: boolean
@@ -1513,6 +1857,7 @@ export type RestaurantSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   categories?: boolean | Prisma.Restaurant$categoriesArgs<ExtArgs>
   menuItems?: boolean | Prisma.Restaurant$menuItemsArgs<ExtArgs>
   orders?: boolean | Prisma.Restaurant$ordersArgs<ExtArgs>
+  expenses?: boolean | Prisma.Restaurant$expensesArgs<ExtArgs>
   tableServiceRequests?: boolean | Prisma.Restaurant$tableServiceRequestsArgs<ExtArgs>
   staffInvites?: boolean | Prisma.Restaurant$staffInvitesArgs<ExtArgs>
   _count?: boolean | Prisma.RestaurantCountOutputTypeDefaultArgs<ExtArgs>
@@ -1525,6 +1870,9 @@ export type RestaurantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   slug?: boolean
   city?: boolean
   timezone?: boolean
+  logoUrl?: boolean
+  primaryColor?: boolean
+  accentColor?: boolean
   gstRate?: boolean
   gstInclusive?: boolean
   createdAt?: boolean
@@ -1538,6 +1886,9 @@ export type RestaurantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   slug?: boolean
   city?: boolean
   timezone?: boolean
+  logoUrl?: boolean
+  primaryColor?: boolean
+  accentColor?: boolean
   gstRate?: boolean
   gstInclusive?: boolean
   createdAt?: boolean
@@ -1551,12 +1902,15 @@ export type RestaurantSelectScalar = {
   slug?: boolean
   city?: boolean
   timezone?: boolean
+  logoUrl?: boolean
+  primaryColor?: boolean
+  accentColor?: boolean
   gstRate?: boolean
   gstInclusive?: boolean
   createdAt?: boolean
 }
 
-export type RestaurantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "name" | "slug" | "city" | "timezone" | "gstRate" | "gstInclusive" | "createdAt", ExtArgs["result"]["restaurant"]>
+export type RestaurantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "name" | "slug" | "city" | "timezone" | "logoUrl" | "primaryColor" | "accentColor" | "gstRate" | "gstInclusive" | "createdAt", ExtArgs["result"]["restaurant"]>
 export type RestaurantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   users?: boolean | Prisma.Restaurant$usersArgs<ExtArgs>
@@ -1564,6 +1918,7 @@ export type RestaurantInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   categories?: boolean | Prisma.Restaurant$categoriesArgs<ExtArgs>
   menuItems?: boolean | Prisma.Restaurant$menuItemsArgs<ExtArgs>
   orders?: boolean | Prisma.Restaurant$ordersArgs<ExtArgs>
+  expenses?: boolean | Prisma.Restaurant$expensesArgs<ExtArgs>
   tableServiceRequests?: boolean | Prisma.Restaurant$tableServiceRequestsArgs<ExtArgs>
   staffInvites?: boolean | Prisma.Restaurant$staffInvitesArgs<ExtArgs>
   _count?: boolean | Prisma.RestaurantCountOutputTypeDefaultArgs<ExtArgs>
@@ -1584,6 +1939,7 @@ export type $RestaurantPayload<ExtArgs extends runtime.Types.Extensions.Internal
     categories: Prisma.$MenuCategoryPayload<ExtArgs>[]
     menuItems: Prisma.$MenuItemPayload<ExtArgs>[]
     orders: Prisma.$OrderPayload<ExtArgs>[]
+    expenses: Prisma.$ExpensePayload<ExtArgs>[]
     tableServiceRequests: Prisma.$TableServiceRequestPayload<ExtArgs>[]
     staffInvites: Prisma.$StaffInvitePayload<ExtArgs>[]
   }
@@ -1594,6 +1950,9 @@ export type $RestaurantPayload<ExtArgs extends runtime.Types.Extensions.Internal
     slug: string
     city: string
     timezone: string
+    logoUrl: string | null
+    primaryColor: string | null
+    accentColor: string | null
     gstRate: runtime.Decimal
     gstInclusive: boolean
     createdAt: Date
@@ -1997,6 +2356,7 @@ export interface Prisma__RestaurantClient<T, Null = never, ExtArgs extends runti
   categories<T extends Prisma.Restaurant$categoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Restaurant$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MenuCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   menuItems<T extends Prisma.Restaurant$menuItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Restaurant$menuItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MenuItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orders<T extends Prisma.Restaurant$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Restaurant$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  expenses<T extends Prisma.Restaurant$expensesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Restaurant$expensesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExpensePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tableServiceRequests<T extends Prisma.Restaurant$tableServiceRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Restaurant$tableServiceRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TableServiceRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   staffInvites<T extends Prisma.Restaurant$staffInvitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Restaurant$staffInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StaffInvitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2034,6 +2394,9 @@ export interface RestaurantFieldRefs {
   readonly slug: Prisma.FieldRef<"Restaurant", 'String'>
   readonly city: Prisma.FieldRef<"Restaurant", 'String'>
   readonly timezone: Prisma.FieldRef<"Restaurant", 'String'>
+  readonly logoUrl: Prisma.FieldRef<"Restaurant", 'String'>
+  readonly primaryColor: Prisma.FieldRef<"Restaurant", 'String'>
+  readonly accentColor: Prisma.FieldRef<"Restaurant", 'String'>
   readonly gstRate: Prisma.FieldRef<"Restaurant", 'Decimal'>
   readonly gstInclusive: Prisma.FieldRef<"Restaurant", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Restaurant", 'DateTime'>
@@ -2555,6 +2918,30 @@ export type Restaurant$ordersArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.OrderScalarFieldEnum | Prisma.OrderScalarFieldEnum[]
+}
+
+/**
+ * Restaurant.expenses
+ */
+export type Restaurant$expensesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Expense
+   */
+  select?: Prisma.ExpenseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Expense
+   */
+  omit?: Prisma.ExpenseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExpenseInclude<ExtArgs> | null
+  where?: Prisma.ExpenseWhereInput
+  orderBy?: Prisma.ExpenseOrderByWithRelationInput | Prisma.ExpenseOrderByWithRelationInput[]
+  cursor?: Prisma.ExpenseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ExpenseScalarFieldEnum | Prisma.ExpenseScalarFieldEnum[]
 }
 
 /**

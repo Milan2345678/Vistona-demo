@@ -52,6 +52,9 @@ model Restaurant {
   slug                 String                @unique
   city                 String
   timezone             String                @default("Asia/Kolkata")
+  logoUrl              String?
+  primaryColor         String?
+  accentColor          String?
   gstRate              Decimal               @default(0) @db.Decimal(5, 2)
   gstInclusive         Boolean               @default(false)
   createdAt            DateTime              @default(now())
@@ -61,6 +64,7 @@ model Restaurant {
   categories           MenuCategory[]
   menuItems            MenuItem[]
   orders               Order[]
+  expenses             Expense[]
   tableServiceRequests TableServiceRequest[]
   staffInvites         StaffInvite[]
 
@@ -69,21 +73,22 @@ model Restaurant {
 }
 
 model User {
-  id             String        @id @default(dbgenerated("gen_random_uuid()::text"))
-  tenantId       String
-  restaurantId   String
-  name           String
-  email          String        @unique
-  passwordHash   String
-  role           UserRole
-  active         Boolean       @default(true)
-  authVersion    Int           @default(0)
-  createdAt      DateTime      @default(now())
-  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  restaurant     Restaurant    @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
-  orders         Order[]
-  kotEvents      KotEvent[]
-  createdInvites StaffInvite[] @relation("StaffInviteCreator")
+  id              String        @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId        String
+  restaurantId    String
+  name            String
+  email           String        @unique
+  passwordHash    String
+  role            UserRole
+  active          Boolean       @default(true)
+  authVersion     Int           @default(0)
+  createdAt       DateTime      @default(now())
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  restaurant      Restaurant    @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  orders          Order[]
+  createdExpenses Expense[]     @relation("ExpenseCreator")
+  kotEvents       KotEvent[]
+  createdInvites  StaffInvite[] @relation("StaffInviteCreator")
 
   @@unique([id, tenantId])
   @@index([restaurantId, tenantId])
@@ -273,4 +278,21 @@ model Payment {
   updatedAt         DateTime  @updatedAt
 
   @@index([orderId])
+}
+
+model Expense {
+  id            String     @id @default(dbgenerated("gen_random_uuid()::text"))
+  tenantId      String
+  restaurantId  String
+  createdById   String
+  amount        Decimal    @db.Decimal(10, 2)
+  category      String
+  description   String     @default("")
+  expenseDate   DateTime   @db.Date
+  paymentMethod String
+  createdAt     DateTime   @default(now())
+  restaurant    Restaurant @relation(fields: [restaurantId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  createdBy     User       @relation("ExpenseCreator", fields: [createdById, tenantId], references: [id, tenantId], onDelete: Restrict)
+
+  @@index([tenantId, restaurantId, expenseDate])
 }

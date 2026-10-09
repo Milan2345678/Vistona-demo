@@ -106,3 +106,8 @@ export type KotEvent = Prisma.KotEventModel
  *
  */
 export type Payment = Prisma.PaymentModel
+/**
+ * Model Expense
+ *
+ */
+export type Expense = Prisma.ExpenseModel

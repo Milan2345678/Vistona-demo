@@ -9,6 +9,8 @@ Vistona Beta 2.0 is a multi-tenant restaurant operations app for managers, waite
 - **Kitchen dashboard:** follow KOTs through New, Preparing, and Ready; order status changes update the ticket and record KOT events.
 - **Menu and tables:** managers create and update menu categories, dishes, availability, and tables. Deleting a dish or table deactivates it so order history remains intact. Tables have stable QR tokens.
 - **QR ordering:** customers open a restaurant menu, submit orders for the table identified by its QR token, track that order, download a bill, and request a bill or water from staff.
+- **Restaurant branding:** managers configure a public HTTPS logo URL and primary/accent colors used by that restaurant's QR menu.
+- **Expense management:** managers record categorized expenses, review up to 500 recent entries, and filter totals by category and date. Entries are scoped to the signed-in restaurant and record their creator; expenses are not linked to a BusinessDay because that model is not present.
 - **Billing and payments:** each order stores its tax calculation; managers configure GST rate and whether menu prices include GST. Staff can record cash or UPI. Optional Razorpay checkout uses signed checkout verification and a webhook.
 - **Staff and roles:** managers create waiter/kitchen accounts or issue single-use, seven-day invites. Staff can join through an invite. Password changes, role changes, and deactivation invalidate existing sessions.
 
@@ -77,6 +79,8 @@ npm run build
 - `src/app/api/auth/` — signup, login, logout, session, account, and password routes.
 - `src/app/api/restaurant/`, `src/app/api/staff/`, `src/app/api/orders/` — restaurant administration, staff, order/KOT, billing, and reports.
 - `src/app/api/qr/` — public menu, QR ordering, order tracking, bills, and table service requests.
+- `src/app/api/expenses/` and `src/app/manager/expenses/` — manager expense history, filters, summaries, and entry.
+- `src/app/api/restaurant/branding/` and `src/app/manager/branding/` — manager restaurant logo and color settings.
 - `src/app/api/payments/` — Razorpay order creation, verification, and webhook handling.
 - `src/lib/` — PostgreSQL pool, session checks, order logic, billing, and payment helpers.
 - `prisma/schema.prisma`, `prisma/migrations/` — Prisma data model and PostgreSQL migrations.

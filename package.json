@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/auth.test.ts src/lib/account-input.test.ts src/lib/menu-csv.test.ts src/lib/bill-pdf.test.ts src/lib/tax.test.ts",
+    "test": "tsx --test src/lib/auth.test.ts src/lib/account-input.test.ts src/lib/menu-csv.test.ts src/lib/bill-pdf.test.ts src/lib/tax.test.ts src/lib/expenses.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed"

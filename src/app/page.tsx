@@ -1015,6 +1015,18 @@ export default function Home() {
                 </button>
               );
             })}
+          {role === "Manager" && (
+            <>
+              <a className="nav-item" href="/manager/expenses">
+                <CircleDollarSign size={17} />
+                <span>Expenses</span>
+              </a>
+              <a className="nav-item" href="/manager/branding">
+                <Settings size={17} />
+                <span>Branding</span>
+              </a>
+            </>
+          )}
         </nav>
         <div className="sidebar-bottom">
           <div className="shift-note">
