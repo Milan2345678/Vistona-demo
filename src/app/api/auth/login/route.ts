@@ -3,6 +3,8 @@ import { z } from "zod";
 import { verifyPassword } from "@/lib/auth";
 import { authenticatedResponse } from "@/lib/auth-response";
 import { pool } from "@/lib/database";
+import { DUMMY_PASSWORD_HASH } from "@/lib/login-hardening";
+import { checkAuthRateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -15,6 +17,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Enter a valid email and password" },
       { status: 400 },
+    );
+  }
+  const retryAfter = checkAuthRateLimit(request, parsed.data.email);
+  if (retryAfter !== null) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
     );
   }
   if (
@@ -38,9 +47,13 @@ export async function POST(request: Request) {
       [parsed.data.email.trim().toLowerCase()],
     );
     const user = result.rows[0];
+    const passwordMatches = await verifyPassword(
+      parsed.data.password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
     if (
       !user ||
-      !(await verifyPassword(parsed.data.password, user.passwordHash))
+      !passwordMatches
     ) {
       return NextResponse.json(
         { error: "Email or password is incorrect" },
