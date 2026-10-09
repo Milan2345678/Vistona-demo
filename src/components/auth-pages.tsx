@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { dashboardPath } from "@/lib/user-roles";
 import type { AppRole } from "@/lib/auth";
+import { PASSWORD_POLICY, PASSWORD_RULES } from "@/lib/password-rules";
 
 type AuthResult = { user?: { role: AppRole }; error?: string };
 
@@ -283,8 +284,8 @@ export function OwnerSignupPage() {
               setError("");
             }}
             required
-            minLength={12}
-            maxLength={72}
+            minLength={PASSWORD_POLICY.minLength}
+            maxLength={PASSWORD_POLICY.maxCharacters}
           />
         </label>
         <label>
@@ -301,8 +302,7 @@ export function OwnerSignupPage() {
           />
         </label>
         <p className="auth-hint">
-          Use at least 12 characters with uppercase, lowercase, number, and
-          symbol.
+          Password requirements: {PASSWORD_RULES.join(", ")}.
         </p>
         {error && (
           <p className="auth-error" role="alert">
@@ -420,8 +420,8 @@ export function JoinPage() {
               setError("");
             }}
             required
-            minLength={12}
-            maxLength={72}
+            minLength={PASSWORD_POLICY.minLength}
+            maxLength={PASSWORD_POLICY.maxCharacters}
           />
         </label>
         <label>
@@ -438,8 +438,7 @@ export function JoinPage() {
           />
         </label>
         <p className="auth-hint">
-          Use at least 12 characters with uppercase, lowercase, number, and
-          symbol.
+          Password requirements: {PASSWORD_RULES.join(", ")}.
         </p>
         {error && (
           <p className="auth-error" role="alert">

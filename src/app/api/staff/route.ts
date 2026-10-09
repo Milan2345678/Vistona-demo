@@ -43,11 +43,10 @@ export async function POST(request: Request) {
   );
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid staff details" },
+      { error: parsed.error.issues[0]?.message ?? "Invalid staff details" },
       { status: 400 },
     );
   }
-
   try {
     const passwordHash = await hashPassword(parsed.data.password);
     const result = await pool.query(
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (isUniqueViolation(error)) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
+        { error: "Unable to create staff account" },
         { status: 409 },
       );
     }

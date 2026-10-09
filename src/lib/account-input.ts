@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { PASSWORD_POLICY } from "./password-rules";
+
+export { PASSWORD_RULES } from "./password-rules";
 
 export const nameSchema = z.string().trim().min(2).max(80);
 export const emailSchema = z
@@ -9,14 +12,33 @@ export const emailSchema = z
   .transform((email) => email.toLowerCase());
 
 export const passwordSchema = z
-  .string()
-  .min(12)
-  .max(72)
-  .regex(/[a-z]/, "Password must include a lowercase letter")
-  .regex(/[A-Z]/, "Password must include an uppercase letter")
-  .regex(/[0-9]/, "Password must include a number")
-  .regex(/[^A-Za-z0-9]/, "Password must include a symbol")
+  .string({ error: "Password is required" })
+  .min(
+    PASSWORD_POLICY.minLength,
+    `Password must be at least ${PASSWORD_POLICY.minLength} characters`,
+  )
+  .max(
+    PASSWORD_POLICY.maxCharacters,
+    `Password must be at most ${PASSWORD_POLICY.maxCharacters} characters`,
+  )
+  .regex(
+    PASSWORD_POLICY.checks[0].pattern,
+    PASSWORD_POLICY.checks[0].message,
+  )
+  .regex(
+    PASSWORD_POLICY.checks[1].pattern,
+    PASSWORD_POLICY.checks[1].message,
+  )
+  .regex(
+    PASSWORD_POLICY.checks[2].pattern,
+    PASSWORD_POLICY.checks[2].message,
+  )
+  .regex(
+    PASSWORD_POLICY.checks[3].pattern,
+    PASSWORD_POLICY.checks[3].message,
+  )
   .refine(
-    (password) => new TextEncoder().encode(password).length <= 72,
-    "Password must be at most 72 UTF-8 bytes",
+    (password) =>
+      new TextEncoder().encode(password).length <= PASSWORD_POLICY.maxUtf8Bytes,
+    `Password must be at most ${PASSWORD_POLICY.maxUtf8Bytes} UTF-8 bytes`,
   );
