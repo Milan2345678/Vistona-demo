@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const retryAfter = checkAuthRateLimit(request, parsed.data.email);
+  const retryAfter = checkAuthRateLimit(parsed.data.email);
   if (retryAfter !== null) {
     return NextResponse.json(
       { error: "Too many attempts. Please try again later." },

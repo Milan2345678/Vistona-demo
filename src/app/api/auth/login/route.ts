@@ -4,7 +4,7 @@ import { verifyPassword } from "@/lib/auth";
 import { authenticatedResponse } from "@/lib/auth-response";
 import { pool } from "@/lib/database";
 import { DUMMY_PASSWORD_HASH } from "@/lib/login-hardening";
-import { checkAuthRateLimit } from "@/lib/rate-limit";
+import { beginLoginRateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -19,13 +19,6 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const retryAfter = checkAuthRateLimit(request, parsed.data.email);
-  if (retryAfter !== null) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please try again later." },
-      { status: 429, headers: { "Retry-After": String(retryAfter) } },
-    );
-  }
   if (
     !process.env.DATABASE_URL ||
     !process.env.JWT_SECRET ||
@@ -37,6 +30,14 @@ export async function POST(request: Request) {
           "Sign-in is not configured. Set DATABASE_URL and a 32-character JWT_SECRET.",
       },
       { status: 503 },
+    );
+  }
+
+  const attempt = beginLoginRateLimit(parsed.data.email);
+  if (attempt.retryAfter !== null) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(attempt.retryAfter) } },
     );
   }
 
@@ -55,14 +56,17 @@ export async function POST(request: Request) {
       !user ||
       !passwordMatches
     ) {
+      attempt.finish(false);
       return NextResponse.json(
         { error: "Email or password is incorrect" },
         { status: 401 },
       );
     }
 
+    attempt.finish(true);
     return authenticatedResponse(user);
   } catch (error: unknown) {
+    attempt.finish(false);
     const details = error as { code?: unknown; message?: unknown };
     const message =
       typeof details.message === "string" ? details.message : "Unknown error";

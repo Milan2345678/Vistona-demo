@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import TableManagement from "@/components/table-management";
 import { calculateTax } from "@/lib/tax";
 import { PollHttpError, usePolling } from "@/hooks/use-polling";
+import { checkStartupSession } from "@/lib/startup-session";
 import {
   Bell,
   ChefHat,
@@ -472,61 +473,50 @@ export default function Home() {
     let mounted = true;
     const controller = new AbortController();
     const checkSession = async () => {
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        try {
-          let response = await fetch("/api/auth/session", {
-            cache: "no-store",
-            signal: controller.signal,
-          });
-          if (response.status === 401) {
-            response = await fetch("/api/auth/session", {
-              cache: "no-store",
-              signal: controller.signal,
-            });
-            if (response.status === 401) {
-              if (mounted) router.replace("/login");
-              return;
-            }
-          }
-          if (!response.ok) {
-            if (attempt < 2) {
-              await new Promise((resolve) => window.setTimeout(resolve, 3000));
-              continue;
-            }
-            if (mounted)
-              setAuthError("Session service is temporarily unavailable.");
-            return;
-          }
-
-          const data = await response.json();
-          if (!mounted) return;
-          if (!data?.user) {
-            setAuthError("Session could not be verified. Please retry.");
-            return;
-          }
-          const nextRole = (data.user.role[0].toUpperCase() +
-            data.user.role.slice(1)) as Role;
-          setRole(nextRole);
-          setUserName(data.user.name ?? data.user.email);
-          setSignedIn(true);
-          setView(
-            nextRole === "Kitchen"
-              ? "Kitchen"
-              : nextRole === "Waiter"
-                ? "Tables"
-                : "Dashboard",
-          );
-          return;
-        } catch {
-          if (attempt < 2) {
-            await new Promise((resolve) => window.setTimeout(resolve, 3000));
-            continue;
-          }
-          if (mounted)
-            setAuthError("Could not reach the session service. Please retry.");
-          return;
-        }
+      const result = await checkStartupSession({
+        signal: controller.signal,
+        requestSession: (signal) =>
+          fetch("/api/auth/session", { cache: "no-store", signal }),
+        wait: (signal) =>
+          new Promise<void>((resolve) => {
+            if (signal.aborted) return resolve();
+            const timer = window.setTimeout(resolve, 3000);
+            signal.addEventListener("abort", () => {
+              window.clearTimeout(timer);
+              resolve();
+            }, { once: true });
+          }),
+      });
+      if (!mounted || result.kind === "aborted") return;
+      if (result.kind === "unauthenticated") {
+        router.replace("/login");
+        return;
       }
+      if (result.kind === "unavailable") {
+        setAuthError(result.network
+          ? "Could not reach the session service. Please retry."
+          : "Session service is temporarily unavailable.");
+        return;
+      }
+
+      const data = await result.response.json().catch(() => null);
+      if (!mounted) return;
+      if (!data?.user) {
+        setAuthError("Session could not be verified. Please retry.");
+        return;
+      }
+      const nextRole = (data.user.role[0].toUpperCase() +
+        data.user.role.slice(1)) as Role;
+      setRole(nextRole);
+      setUserName(data.user.name ?? data.user.email);
+      setSignedIn(true);
+      setView(
+        nextRole === "Kitchen"
+          ? "Kitchen"
+          : nextRole === "Waiter"
+            ? "Tables"
+            : "Dashboard",
+      );
     };
     void checkSession().finally(() => {
       if (mounted) setAuthReady(true);
@@ -643,11 +633,12 @@ export default function Home() {
           if (!requestsResponse.ok) {
             throw new PollHttpError(requestsResponse.status);
           }
+          if (!mounted || signal.aborted) return;
           setServiceRequests(requestsData.requests);
           setServiceRequestsError("");
         }
       } catch (error: unknown) {
-        if (mounted) {
+        if (mounted && !signal.aborted) {
           setTablesLoading(false);
         }
         throw error;
