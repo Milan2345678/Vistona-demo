@@ -3,6 +3,8 @@ import { z } from "zod";
 import { verifyPassword } from "@/lib/auth";
 import { authenticatedResponse } from "@/lib/auth-response";
 import { pool } from "@/lib/database";
+import { DUMMY_PASSWORD_HASH } from "@/lib/login-hardening";
+import { beginLoginRateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -31,6 +33,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const attempt = beginLoginRateLimit(parsed.data.email);
+  if (attempt.retryAfter !== null) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(attempt.retryAfter) } },
+    );
+  }
+
   try {
     const result = await pool.query(
       `SELECT id, "tenantId", "restaurantId", name, email, "passwordHash", role, "authVersion"
@@ -38,18 +48,25 @@ export async function POST(request: Request) {
       [parsed.data.email.trim().toLowerCase()],
     );
     const user = result.rows[0];
+    const passwordMatches = await verifyPassword(
+      parsed.data.password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
     if (
       !user ||
-      !(await verifyPassword(parsed.data.password, user.passwordHash))
+      !passwordMatches
     ) {
+      attempt.finish(false);
       return NextResponse.json(
         { error: "Email or password is incorrect" },
         { status: 401 },
       );
     }
 
+    attempt.finish(true);
     return authenticatedResponse(user);
   } catch (error: unknown) {
+    attempt.finish(false);
     const details = error as { code?: unknown; message?: unknown };
     const message =
       typeof details.message === "string" ? details.message : "Unknown error";

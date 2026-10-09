@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/auth";
 import { createScopedSlug, isUniqueViolation } from "@/lib/account-security";
 import { emailSchema, nameSchema, passwordSchema } from "@/lib/account-input";
 import { pool } from "@/lib/database";
+import { checkAuthRateLimit } from "@/lib/rate-limit";
 
 const signupSchema = z
   .object({
@@ -20,8 +21,15 @@ export async function POST(request: Request) {
   const parsed = signupSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid restaurant owner details" },
+      { error: parsed.error.issues[0]?.message ?? "Invalid signup details" },
       { status: 400 },
+    );
+  }
+  const retryAfter = checkAuthRateLimit(parsed.data.email);
+  if (retryAfter !== null) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
     );
   }
   if (
@@ -76,7 +84,7 @@ export async function POST(request: Request) {
     await client.query("ROLLBACK").catch(() => undefined);
     if (isUniqueViolation(error)) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
+        { error: "Unable to complete signup" },
         { status: 409 },
       );
     }

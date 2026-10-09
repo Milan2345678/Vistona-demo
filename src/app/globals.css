@@ -4068,6 +4068,17 @@ button {
   height: 16px;
   accent-color: var(--navy);
 }
+.connection-banner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 9px 16px;
+  background: #fff1d6;
+  color: #735015;
+  border-bottom: 1px solid #e6c77f;
+  font-size: 12px;
+  text-align: center;
+}
 @media (max-width: 760px) {
   .manager-menu-heading-actions {
     width: 100%;

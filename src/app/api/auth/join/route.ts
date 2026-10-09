@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/auth";
 import { hashInviteCode, isUniqueViolation } from "@/lib/account-security";
 import { emailSchema, nameSchema, passwordSchema } from "@/lib/account-input";
 import { pool } from "@/lib/database";
+import { checkAuthRateLimit } from "@/lib/rate-limit";
 
 const joinSchema = z
   .object({
@@ -19,8 +20,15 @@ export async function POST(request: Request) {
   const parsed = joinSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid account or invite details" },
+      { error: parsed.error.issues[0]?.message ?? "Invalid join details" },
       { status: 400 },
+    );
+  }
+  const retryAfter = checkAuthRateLimit(parsed.data.email);
+  if (retryAfter !== null) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
     );
   }
   if (
@@ -49,7 +57,7 @@ export async function POST(request: Request) {
     if (!invite || !["WAITER", "KITCHEN"].includes(String(invite.role))) {
       await client.query("ROLLBACK");
       return NextResponse.json(
-        { error: "Invite is invalid, expired, or already used" },
+        { error: "Unable to complete join request" },
         { status: 400 },
       );
     }
@@ -77,8 +85,8 @@ export async function POST(request: Request) {
     await client.query("ROLLBACK").catch(() => undefined);
     if (isUniqueViolation(error)) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 409 },
+        { error: "Unable to complete join request" },
+        { status: 400 },
       );
     }
     return NextResponse.json(
