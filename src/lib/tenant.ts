@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/database";
 import {
-  verifySessionToken,
+  verifySessionTokenWithReason,
   type AppRole,
   type SessionClaims,
 } from "@/lib/auth";
@@ -14,39 +14,60 @@ export type SessionResult =
   | { status: "invalid" }
   | { status: "unavailable" };
 
-function logDatabaseError(error: unknown) {
-  const dbError = error as { code?: unknown; message?: unknown };
-  console.error("[db]", {
-    code: typeof dbError?.code === "string" ? dbError.code : undefined,
-    message:
-      typeof dbError?.message === "string" ? dbError.message : undefined,
-  });
+export type SessionFailureReason =
+  | "no_cookie"
+  | "bad_signature"
+  | "expired"
+  | "user_missing"
+  | "inactive"
+  | "tenant_mismatch"
+  | "restaurant_mismatch"
+  | "auth_version_mismatch"
+  | "db_unavailable";
+
+type SessionUserRow = {
+  tenantId: string;
+  restaurantId: string;
+  name: string;
+  email: string;
+  role: string;
+  active: boolean;
+  authVersion: number | string;
+};
+
+type SessionUserQuery = (userId: string) => Promise<{ rows: SessionUserRow[] }>;
+
+function invalidSession(reason: Exclude<SessionFailureReason, "db_unavailable">): SessionResult {
+  console.warn("[session]", { reason });
+  return { status: "invalid" };
 }
 
-export async function resolveSession(): Promise<SessionResult> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!token) return { status: "invalid" };
-  const claims = verifySessionToken(token);
-  if (!claims) return { status: "invalid" };
-
-  try {
-    const result = await pool.query(
+export async function resolveSessionForToken(
+  token: string | undefined,
+  queryUser: SessionUserQuery = async (userId) =>
+    pool.query(
       `SELECT "tenantId", "restaurantId", name, email, role, active, "authVersion"
          FROM "User" WHERE id = $1 LIMIT 1`,
-      [claims.sub],
-    );
+      [userId],
+    ),
+): Promise<SessionResult> {
+  if (!token) return invalidSession("no_cookie");
+  const verification = verifySessionTokenWithReason(token);
+  const claims = verification.claims;
+  if (!claims) return invalidSession(verification.reason);
+
+  try {
+    const result = await queryUser(claims.sub);
     const user = result.rows[0];
     const version = Number(user?.authVersion);
-    if (
-      !user ||
-      !user.active ||
-      user.tenantId !== claims.tenantId ||
-      user.restaurantId !== claims.restaurantId ||
-      version !== (claims.version ?? 0)
-    ) {
-      return { status: "invalid" };
-    }
+    if (!user) return invalidSession("user_missing");
+    if (!user.active) return invalidSession("inactive");
+    if (user.tenantId !== claims.tenantId)
+      return invalidSession("tenant_mismatch");
+    if (user.restaurantId !== claims.restaurantId)
+      return invalidSession("restaurant_mismatch");
+    if (version !== (claims.version ?? 0))
+      return invalidSession("auth_version_mismatch");
     return {
       status: "ok",
       session: {
@@ -57,10 +78,15 @@ export async function resolveSession(): Promise<SessionResult> {
         version,
       },
     };
-  } catch (error) {
-    logDatabaseError(error);
+  } catch {
+    console.warn("[session]", { reason: "db_unavailable" });
     return { status: "unavailable" };
   }
+}
+
+export async function resolveSession(): Promise<SessionResult> {
+  const cookieStore = await cookies();
+  return resolveSessionForToken(cookieStore.get(SESSION_COOKIE)?.value);
 }
 
 export async function getSession(): Promise<SessionClaims | null> {

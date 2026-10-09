@@ -14,6 +14,12 @@ export type SessionClaims = {
   exp?: number;
 };
 
+export type SessionTokenFailureReason = "bad_signature" | "expired";
+
+export type SessionTokenVerification =
+  | { claims: SessionClaims; reason: null }
+  | { claims: null; reason: SessionTokenFailureReason };
+
 const TOKEN_LIFETIME_SECONDS = 60 * 60 * 12;
 
 function secret() {
@@ -47,8 +53,16 @@ export function issueSessionToken(claims: SessionClaims) {
 }
 
 export function verifySessionToken(token: string): SessionClaims | null {
+  return verifySessionTokenWithReason(token).claims;
+}
+
+export function verifySessionTokenWithReason(
+  token: string,
+): SessionTokenVerification {
   const [payload, suppliedSignature, extra] = token.split(".");
-  if (!payload || !suppliedSignature || extra) return null;
+  if (!payload || !suppliedSignature || extra) {
+    return { claims: null, reason: "bad_signature" };
+  }
 
   try {
     const expectedSignature = signature(payload);
@@ -58,7 +72,7 @@ export function verifySessionToken(token: string): SessionClaims | null {
       supplied.length !== expected.length ||
       !timingSafeEqual(supplied, expected)
     ) {
-      return null;
+      return { claims: null, reason: "bad_signature" };
     }
 
     const claims = JSON.parse(
@@ -70,14 +84,16 @@ export function verifySessionToken(token: string): SessionClaims | null {
       !claims.restaurantId ||
       !claims.email ||
       !["manager", "waiter", "kitchen"].includes(claims.role) ||
-      typeof claims.exp !== "number" ||
-      claims.exp <= Math.floor(Date.now() / 1000)
+      typeof claims.exp !== "number"
     ) {
-      return null;
+      return { claims: null, reason: "bad_signature" };
     }
-    return claims;
+    if (claims.exp <= Math.floor(Date.now() / 1000)) {
+      return { claims: null, reason: "expired" };
+    }
+    return { claims, reason: null };
   } catch {
-    return null;
+    return { claims: null, reason: "bad_signature" };
   }
 }
 
