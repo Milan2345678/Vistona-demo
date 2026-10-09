@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import TableManagement from "@/components/table-management";
 import { calculateTax } from "@/lib/tax";
+import { PollHttpError, usePolling } from "@/hooks/use-polling";
 import {
   Bell,
   ChefHat,
@@ -465,18 +466,27 @@ export default function Home() {
   const [orderSourceFilter, setOrderSourceFilter] = useState("All");
   const [gstRate, setGstRate] = useState(0);
   const [gstInclusive, setGstInclusive] = useState(false);
+  const dashboardPollRef = useRef<((signal: AbortSignal) => Promise<void>) | null>(null);
 
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
     const checkSession = async () => {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
-          const response = await fetch("/api/auth/session", {
+          let response = await fetch("/api/auth/session", {
             cache: "no-store",
+            signal: controller.signal,
           });
           if (response.status === 401) {
-            if (mounted) router.replace("/login");
-            return;
+            response = await fetch("/api/auth/session", {
+              cache: "no-store",
+              signal: controller.signal,
+            });
+            if (response.status === 401) {
+              if (mounted) router.replace("/login");
+              return;
+            }
           }
           if (!response.ok) {
             if (attempt < 2) {
@@ -523,20 +533,21 @@ export default function Home() {
     });
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, [router, authRetry]);
 
   useEffect(() => {
     if (!signedIn) return;
     let mounted = true;
-    const loadData = async () => {
+    const loadData = async (signal: AbortSignal) => {
       try {
-        const restaurantResponse = await fetch("/api/restaurant");
+        const restaurantResponse = await fetch("/api/restaurant", { signal });
         const restaurantData = await restaurantResponse.json().catch(() => ({}));
         if (!restaurantResponse.ok) {
-          throw new Error(restaurantData.error ?? "Restaurant tables could not be loaded");
+          throw new PollHttpError(restaurantResponse.status);
         }
-        if (!mounted) return;
+        if (!mounted || signal.aborted) return;
         setRestaurantName(restaurantData.restaurant.name);
         setRestaurantCity(restaurantData.restaurant.city);
         setRestaurantSlug(restaurantData.restaurant.slug);
@@ -566,14 +577,12 @@ export default function Home() {
           setToast("Menu data is unavailable. Tables are still available.");
         }
 
-        try {
-          const ordersResponse = await fetch("/api/orders");
-          const orderData = await ordersResponse.json().catch(() => ({}));
-          if (!ordersResponse.ok) {
-            setToast(orderData.error ?? "Orders could not be loaded");
-            return;
-          }
-          if (!mounted) return;
+        const ordersResponse = await fetch("/api/orders", { signal });
+        const orderData = await ordersResponse.json().catch(() => ({}));
+        if (!ordersResponse.ok) {
+          throw new PollHttpError(ordersResponse.status);
+        }
+        if (!mounted || signal.aborted) return;
         setOrders(
           orderData.orders.map(
             (order: {
@@ -629,58 +638,41 @@ export default function Home() {
           ),
         );
         if (role !== "Kitchen") {
-          const requestsResponse = await fetch("/api/service-requests");
+          const requestsResponse = await fetch("/api/service-requests", { signal });
           const requestsData = await requestsResponse.json().catch(() => ({}));
           if (!requestsResponse.ok) {
-            setServiceRequestsError(
-              requestsData.error ?? "Table service requests could not be loaded",
-            );
-          } else {
-            setServiceRequests(requestsData.requests);
-            setServiceRequestsError("");
+            throw new PollHttpError(requestsResponse.status);
           }
-        }
-        } catch {
-          if (mounted) setToast("Orders could not be loaded. Tables remain available.");
+          setServiceRequests(requestsData.requests);
+          setServiceRequestsError("");
         }
       } catch (error: unknown) {
         if (mounted) {
-          const message = error instanceof Error ? error.message : "Tables could not be loaded";
-          setTablesError(message);
           setTablesLoading(false);
-          setToast(message);
         }
+        throw error;
       }
     };
-    let stopped = false;
-    let running = false;
-    let timer: number | undefined;
-    const tick = async () => {
-      if (stopped || running) return;
-      running = true;
-      try {
-        if (!document.hidden) await loadData();
-      } catch {
-        // loadData already surfaces its request errors in dashboard state.
-      } finally {
-        running = false;
-        if (!stopped) timer = window.setTimeout(() => void tick(), 5000);
-      }
-    };
-    const onVisibilityChange = () => {
-      if (document.hidden || stopped || running) return;
-      if (timer) window.clearTimeout(timer);
-      void tick();
-    };
-    void tick();
-    document.addEventListener("visibilitychange", onVisibilityChange);
+    dashboardPollRef.current = loadData;
     return () => {
-      stopped = true;
       mounted = false;
-      if (timer) window.clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      dashboardPollRef.current = null;
     };
   }, [signedIn, role]);
+
+  const runDashboardPoll = useCallback((signal: AbortSignal) => {
+    return dashboardPollRef.current?.(signal) ?? Promise.resolve();
+  }, []);
+  const onSessionExpired = useCallback(() => {
+    router.replace("/login");
+    router.refresh();
+  }, [router]);
+  const polling = usePolling({
+    enabled: signedIn,
+    pollKey: view,
+    poll: runDashboardPoll,
+    onSessionExpired,
+  });
 
   if (!authReady || !signedIn)
     return (
@@ -1032,6 +1024,14 @@ export default function Home() {
       </aside>
 
       <main className="main-content">
+        {polling.isOffline && (
+          <div className="connection-banner" role="status">
+            Connection lost - showing last updated at{" "}
+            {polling.lastUpdated
+              ? polling.lastUpdated.toLocaleTimeString()
+              : "not yet"}
+          </div>
+        )}
         <header className="topbar">
           <div className="mobile-brand">
             <div className="brand-mark">
